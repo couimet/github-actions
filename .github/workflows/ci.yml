@@ -36,7 +36,7 @@ jobs:
           NODE_VERSION_OUTPUT: ${{ steps.setup.outputs.node-version }}
           PNPM_VERSION_OUTPUT: ${{ steps.setup.outputs.pnpm-version }}
           CACHE_HIT: ${{ steps.install.outputs.cache-hit }}
-        run: ./scripts/verify-versions.sh
+        run: bash ./scripts/verify-versions.sh
 
       - name: Run shell tests (BATS)
         uses: ./bats-test

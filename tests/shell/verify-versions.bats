@@ -21,7 +21,7 @@ EOF
     PACKAGE_JSON_PATH="$TEST_TEMP_DIR/package.json" \
     NODE_VERSION_OUTPUT="v24.3.1" \
     PNPM_VERSION_OUTPUT="9.1.0" \
-    "$SCRIPT"
+    bash "$SCRIPT"
   [ "$status" -eq 0 ]
 }
 
@@ -32,7 +32,7 @@ EOF
     PACKAGE_JSON_PATH="$TEST_TEMP_DIR/package.json" \
     NODE_VERSION_OUTPUT="v24.3.1" \
     PNPM_VERSION_OUTPUT="9.1.0" \
-    "$SCRIPT"
+    bash "$SCRIPT"
   [ "$status" -eq 0 ]
 }
 
@@ -43,7 +43,7 @@ EOF
     PACKAGE_JSON_PATH="$TEST_TEMP_DIR/package.json" \
     NODE_VERSION_OUTPUT="v22.0.0" \
     PNPM_VERSION_OUTPUT="9.1.0" \
-    "$SCRIPT"
+    bash "$SCRIPT"
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "Node version mismatch"
 }
@@ -55,7 +55,7 @@ EOF
     PACKAGE_JSON_PATH="$TEST_TEMP_DIR/package.json" \
     NODE_VERSION_OUTPUT="v24.3.1" \
     PNPM_VERSION_OUTPUT="8.0.0" \
-    "$SCRIPT"
+    bash "$SCRIPT"
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "pnpm version mismatch"
 }
@@ -67,6 +67,6 @@ EOF
     PACKAGE_JSON_PATH="$TEST_TEMP_DIR/package.json" \
     NODE_VERSION_OUTPUT="24.0.0" \
     PNPM_VERSION_OUTPUT="9.1.0" \
-    "$SCRIPT"
+    bash "$SCRIPT"
   [ "$status" -eq 0 ]
 }
