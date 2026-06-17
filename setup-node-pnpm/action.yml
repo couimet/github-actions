@@ -6,6 +6,10 @@ inputs:
     description: 'Node.js version to install. When set, overrides .nvmrc.'
     required: false
     default: ''
+  working-directory:
+    description: 'Directory containing the package.json whose packageManager field Corepack should resolve.'
+    required: false
+    default: '.'
 
 outputs:
   node-version:
@@ -32,4 +36,5 @@ runs:
     - name: Capture pnpm version
       id: pnpm-version
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: echo "version=$(pnpm --version)" >> "$GITHUB_OUTPUT"

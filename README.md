@@ -34,6 +34,7 @@ Installs Node.js (reading the version from the consuming repo's `.nvmrc` unless 
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
 | `node-version` | no | (reads `.nvmrc`) | Overrides `.nvmrc` when set. |
+| `working-directory` | no | `.` | Directory containing the `package.json` whose `packageManager` field Corepack should resolve. Set this when `package.json` lives in a subdirectory (e.g. a test fixture). |
 
 | Output | Description |
 | --- | --- |
