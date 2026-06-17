@@ -6,6 +6,33 @@ Shared composite GitHub Actions to keep CI bootstrap consistent across projects 
 
 Listed alphabetically.
 
+### `bats-test`
+
+Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a directory of `.bats` files. The step fails when any test fails.
+
+| Input | Required | Default | Description |
+| --- | --- | --- | --- |
+| `test-directory` | no | `tests/` | Directory containing `.bats` test files. |
+| `bats-version` | no | `1.13.0` | BATS version installed; pinned so CI matches the local brew stable. |
+| `support-install` | no | `false` | Install the `bats-support` helper library. |
+| `assert-install` | no | `false` | Install the `bats-assert` helper library. |
+| `file-install` | no | `false` | Install the `bats-file` helper library. |
+| `detik-install` | no | `false` | Install the `detik` helper library. |
+| `formatter` | no | (empty) | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
+| `recursive` | no | `false` | Recurse into subdirectories of `test-directory`. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/bats-test@main
+    with:
+      test-directory: tests/shell
+```
+
 ### `install-deps`
 
 Restores the pnpm store from cache and runs `pnpm install --frozen-lockfile`.
@@ -51,7 +78,7 @@ steps:
 
 ## Versioning
 
-Consumers reference actions with `@main` for now. No version tags exist yet. When the first stable release cycle warrants it, this repository will adopt per-action compound tags (`setup-node-pnpm/v1.2.3`, `install-deps/v1.0.0`, and so on). See [`docs/ADR/`](./docs/ADR/) for the rationale and the migration plan.
+Consumers reference actions with `@main` for now, which keeps friction low while only three actions exist. No version tags exist yet. When the first stable release cycle warrants it, this repository will adopt per-action compound tags (`setup-node-pnpm/v1.2.3`, `install-deps/v1.0.0`, and so on). See [`docs/ADR/`](./docs/ADR/) for the rationale and the migration plan.
 
 ## Documentation
 
