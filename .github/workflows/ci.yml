@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  self-test:
+    name: Self-test composite actions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js & pnpm
+        id: setup
+        uses: ./setup-node-pnpm
+
+      - name: Install dependencies
+        id: install
+        uses: ./install-deps
+        with:
+          working-directory: tests
+
+      - name: Echo resolved versions and cache outcome
+        shell: bash
+        run: |
+          echo "Resolved Node version : ${{ steps.setup.outputs.node-version }}"
+          echo "Resolved pnpm version : ${{ steps.setup.outputs.pnpm-version }}"
+          echo "Cache hit              : ${{ steps.install.outputs.cache-hit }}"

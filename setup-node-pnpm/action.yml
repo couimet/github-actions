@@ -1,0 +1,35 @@
+name: 'Setup Node.js & pnpm'
+description: 'Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack from the consuming repo''s package.json packageManager field.'
+
+inputs:
+  node-version:
+    description: 'Node.js version to install. When set, overrides .nvmrc.'
+    required: false
+    default: ''
+
+outputs:
+  node-version:
+    description: 'Resolved Node.js version.'
+    value: ${{ steps.setup-node.outputs.node-version }}
+  pnpm-version:
+    description: 'Resolved pnpm version (from Corepack).'
+    value: ${{ steps.pnpm-version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      id: setup-node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        node-version-file: '.nvmrc'
+
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Capture pnpm version
+      id: pnpm-version
+      shell: bash
+      run: echo "version=$(pnpm --version)" >> "$GITHUB_OUTPUT"
