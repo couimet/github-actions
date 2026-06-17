@@ -1,0 +1,65 @@
+name: 'Run BATS tests'
+description: 'Runs BATS tests against a configurable directory by wrapping the SHA-pinned bats-core/bats-action. BATS version is pinned for reproducibility and parity with the local brew stable.'
+
+inputs:
+  test-directory:
+    description: 'Directory containing .bats test files.'
+    required: false
+    default: 'tests/'
+  bats-version:
+    description: 'BATS version installed by bats-core/bats-action. Pinned (not floating on latest) so CI matches the local brew stable.'
+    required: false
+    default: '1.13.0'
+  support-install:
+    description: 'Install the bats-support helper library.'
+    required: false
+    default: 'false'
+  assert-install:
+    description: 'Install the bats-assert helper library.'
+    required: false
+    default: 'false'
+  file-install:
+    description: 'Install the bats-file helper library.'
+    required: false
+    default: 'false'
+  detik-install:
+    description: 'Install the bats-detik helper library.'
+    required: false
+    default: 'false'
+  formatter:
+    description: 'BATS output formatter passed as --formatter (e.g. tap, junit). Empty uses the default pretty output.'
+    required: false
+    default: ''
+  recursive:
+    description: 'Recurse into subdirectories of test-directory.'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # The bats-action ref is pinned by SHA and intentionally NOT a caller input:
+    # GitHub forbids ${{ }} expressions in a step's `uses:`, so bump it via PR here.
+    # The configurable lever is bats-version below (pinned to the brew stable for
+    # local/CI parity; bump deliberately on `brew upgrade`).
+    - name: Install BATS
+      uses: bats-core/bats-action@77d6fb60505b4d0d1d73e48bd035b55074bbfb43 # 4.0.0
+      with:
+        bats-version: ${{ inputs.bats-version }}
+        support-install: ${{ inputs.support-install }}
+        assert-install: ${{ inputs.assert-install }}
+        file-install: ${{ inputs.file-install }}
+        detik-install: ${{ inputs.detik-install }}
+
+    - name: Run BATS
+      shell: bash
+      env:
+        TEST_DIRECTORY: ${{ inputs.test-directory }}
+        FORMATTER: ${{ inputs.formatter }}
+        RECURSIVE: ${{ inputs.recursive }}
+      run: |
+        set -euo pipefail
+        args=()
+        if [[ "$RECURSIVE" == "true" ]]; then args+=(--recursive); fi
+        if [[ -n "$FORMATTER" ]]; then args+=(--formatter "$FORMATTER"); fi
+        bats ${args[@]+"${args[@]}"} "$TEST_DIRECTORY"
