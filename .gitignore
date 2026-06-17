@@ -1,2 +1,7 @@
 # Claude skill working directories
 .claude-work/
+
+# Node / pnpm
+node_modules/
+
+.history
