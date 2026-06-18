@@ -1,8 +1,11 @@
-.PHONY: check fmt-check format install-prereqs lint lint-fix lint-md lint-md-fix lint-sh test
+.PHONY: check check-actions fmt-check format install-prereqs lint lint-fix lint-md lint-md-fix lint-sh test
 
 include versions.mk
 
-check: lint test
+check: lint test check-actions
+
+check-actions:
+	bash scripts/verify-action-coverage.sh
 
 fmt-check:
 	npx --yes prettier@$(PRETTIER_VERSION) --check .
