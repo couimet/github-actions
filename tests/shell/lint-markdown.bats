@@ -39,6 +39,14 @@ teardown() {
   echo "$output" | grep -Fq "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc *.md"
 }
 
+@test "multi-glob: splits GLOBS on whitespace into separate arguments" {
+  mkdir -p "$TEST_TEMP_DIR/docs"
+  touch "$TEST_TEMP_DIR/docs/readme.md"
+  run env GLOBS="*.md docs/*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: *.md docs/*.md"
+}
+
 @test "GLOBS unset fails with required error" {
   run env bash "$SCRIPT"
   [ "$status" -ne 0 ]
