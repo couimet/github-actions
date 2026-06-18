@@ -94,6 +94,15 @@ steps:
   - uses: couimet/github-actions/setup-node-pnpm@main
 ```
 
+## Development
+
+| Target | What |
+| --- | --- |
+| `make check` | Run `lint` and `test` — the same gate CI runs on push. |
+| `make lint` | Lint Markdown with the same `markdownlint-cli2` version the CI action pins. |
+| `make lint-fix` | Auto-correct fixable issues (bare URLs, whitespace, list indentation). |
+| `make test` | Run BATS shell tests. Requires [BATS](https://github.com/bats-core/bats-core) (`brew install bats-core`). |
+
 ## Versioning
 
 Consumers reference actions with `@main` for now, which keeps friction low while the action set is small and every consumer is under the same maintainer. No version tags exist yet. When the first stable release cycle warrants it, this repository will adopt per-action compound tags (`setup-node-pnpm/v1.2.3`, `install-deps/v1.0.0`, and so on). See [`docs/ADR/`](./docs/ADR/) for the rationale and the migration plan.

@@ -10,7 +10,7 @@ This repository hosts several composite GitHub Actions in independent top-level 
 
 Git tags name entire commits, not directories. A single tag like `v1.0.0` therefore applies to every action in the repository at once. When two actions evolve at different cadences — for example, `setup-node-pnpm` reaches `v2.0.0` while `install-deps` is still on `v1.x` — a flat tag scheme cannot express that without confusing consumers about which action is at which version.
 
-The pattern of sharing GitHub Actions across repositories via a single hosting repo was first encountered while contributing to a previous employer's (https://github.com/Octav-Labs) monorepo.
+The pattern of sharing GitHub Actions across repositories via a single hosting repo was first encountered while contributing to a previous employer's (<https://github.com/Octav-Labs>) monorepo.
 
 ## Decision
 
@@ -18,7 +18,7 @@ For the initial release of this repository, consumers reference actions with `@m
 
 When the first non-trivial release cycle creates a real need for stable references, this repository will adopt **per-action compound tags** of the form `<action-name>/vMAJOR.MINOR.PATCH`. Consumers then reference an action as:
 
-```
+```yaml
 uses: couimet/github-actions/<action-name>@<action-name>/vMAJOR.MINOR.PATCH
 ```
 
