@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run markdownlint-cli2 with optional --config and explicit paths.
+# Run prettier --check with optional --config and explicit paths.
 #
 # Inputs (env):
-#   CONFIG             path to a config file passed as --config (optional)
-#   PATHS              space-separated glob(s) of Markdown files to lint
 #   WORKING_DIRECTORY  directory to run in (default: .)
+#   CONFIG             path passed as --config (optional)
+#   PATHS              space-separated path(s) to check (default: .)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091  # path resolved via SCRIPT_DIR
 source "$SCRIPT_DIR/../scripts/_lint-helpers.sh"
 
 cd "${WORKING_DIRECTORY:-.}"
-markdownlint-cli2 ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"} "${PATH_ARGS[@]}"
+prettier --check ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"} "${PATH_ARGS[@]}"

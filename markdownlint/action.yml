@@ -11,10 +11,14 @@ inputs:
     description: 'Path to a markdownlint-cli2 config file passed as --config. When empty, auto-discovers all config files at the repo root (supports split configs).'
     required: false
     default: ''
-  globs:
-    description: 'Glob(s) of Markdown files to lint.'
+  paths:
+    description: 'Space-separated glob(s) of Markdown files to lint.'
     required: false
     default: '**/*.md'
+  working-directory:
+    description: 'Directory to run markdownlint in. Set when the target lives in a subdirectory.'
+    required: false
+    default: '.'
 
 runs:
   using: composite
@@ -29,5 +33,6 @@ runs:
       shell: bash
       env:
         CONFIG: ${{ inputs.config }}
-        GLOBS: ${{ inputs.globs }}
+        PATHS: ${{ inputs.paths }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
       run: bash "${{ github.action_path }}/lint.sh"

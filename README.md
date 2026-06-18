@@ -62,7 +62,8 @@ Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/mark
 | ---------------------- | -------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `markdownlint-version` | no       | `0.22.1`  | Version of the `markdownlint-cli2` npm package; pinned for local/CI parity.                                                        |
 | `config`               | no       | (empty)   | Path to a config file passed as `--config`. When empty, auto-discovers all config files at the repo root (supports split configs). |
-| `globs`                | no       | `**/*.md` | Glob(s) of Markdown files to lint.                                                                                                 |
+| `paths`                | no       | `**/*.md` | Space-separated glob(s) of Markdown files to lint.                                                                                 |
+| `working-directory`    | no       | `.`       | Directory to run markdownlint in. Set when the target lives in a subdirectory.                                                     |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -70,6 +71,27 @@ This action has no outputs; success or failure is reported through the step exit
 steps:
   - uses: actions/checkout@v4
   - uses: couimet/github-actions/markdownlint@main
+```
+
+### `prettier`
+
+Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version. The action honors the consuming repo's `.prettierrc*` and `.prettierignore` — defaulting to `.` paths lets the ignore file scope the check. The step fails when any file needs formatting.
+
+| Input               | Required | Default | Description                                                                                                      |
+| ------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `prettier-version`  | no       | `3.8.4` | Version of the `prettier` npm package installed globally; pinned for local/CI parity, overridable.               |
+| `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                       |
+| `paths`             | no       | `.`     | Space-separated path(s) passed to `prettier --check`; the consuming repo's `.prettierignore` governs exclusions. |
+| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.             |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/prettier@main
 ```
 
 ### `setup-node-pnpm`
@@ -92,6 +114,27 @@ steps:
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
+```
+
+### `shellcheck`
+
+Lints shell scripts with [shellcheck](https://www.shellcheck.net/) (preinstalled on GitHub-hosted Ubuntu runners). Scripts are discovered via `find` with configurable extensions and exclusions. The step fails on any lint error.
+
+| Input        | Required | Default                                   | Description                                                |
+| ------------ | -------- | ----------------------------------------- | ---------------------------------------------------------- |
+| `paths`      | no       | `.`                                       | Root to search for shell scripts.                          |
+| `extensions` | no       | `sh bash`                                 | Space-separated file extensions to lint.                   |
+| `exclude`    | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.   |
+| `severity`   | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`). |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/shellcheck@main
 ```
 
 ## Development

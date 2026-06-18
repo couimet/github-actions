@@ -45,10 +45,10 @@ jobs:
         uses: ./markdownlint
 
       - name: Check formatting
-        run: make fmt-check
+        uses: ./prettier
 
       - name: Lint shell scripts
-        run: make lint-sh
+        uses: ./shellcheck
 
       - name: Run shell tests (BATS)
         uses: ./bats-test

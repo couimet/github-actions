@@ -1,0 +1,31 @@
+name: 'Run shellcheck'
+description: 'Discovers shell scripts via find and runs shellcheck (preinstalled on GitHub-hosted Ubuntu runners).'
+inputs:
+  paths:
+    description: 'Root to search for shell scripts.'
+    required: false
+    default: '.'
+  extensions:
+    description: 'Space-separated file extensions to lint.'
+    required: false
+    default: 'sh bash'
+  exclude:
+    description: 'Space-separated path fragments excluded from the find.'
+    required: false
+    default: '.claude-work .history node_modules .git'
+  severity:
+    description: 'Passed as --severity when set (e.g. warning, error).'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Lint shell scripts
+      shell: bash
+      env:
+        PATHS: ${{ inputs.paths }}
+        EXTENSIONS: ${{ inputs.extensions }}
+        EXCLUDE: ${{ inputs.exclude }}
+        SEVERITY: ${{ inputs.severity }}
+      run: bash "${{ github.action_path }}/lint.sh"

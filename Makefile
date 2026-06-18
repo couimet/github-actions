@@ -6,6 +6,7 @@ check: lint test check-actions
 
 check-actions:
 	bash scripts/verify-action-coverage.sh
+	bash scripts/verify-version-pins.sh
 
 fmt-check:
 	npx --yes prettier@$(PRETTIER_VERSION) --check .

@@ -1,0 +1,36 @@
+name: 'Run Prettier'
+description: 'Installs Prettier at a pinned version via npm and checks formatting against the consuming repo .prettierrc* / .prettierignore.'
+inputs:
+  prettier-version:
+    description: 'Version of the prettier npm package to install globally. Pinned for local/CI parity; bump in versions.mk first.'
+    required: false
+    default: '3.8.4'
+  working-directory:
+    description: 'Directory to run Prettier in. Set when the target lives in a subdirectory.'
+    required: false
+    default: '.'
+  paths:
+    description: 'Path(s) passed to prettier --check; the consuming repo .prettierignore governs exclusions.'
+    required: false
+    default: '.'
+  config:
+    description: 'Path passed as --config. When empty, Prettier auto-discovers .prettierrc* in the consuming repo.'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Install Prettier
+      shell: bash
+      env:
+        PRETTIER_VERSION: ${{ inputs.prettier-version }}
+      run: npm install -g prettier@$PRETTIER_VERSION
+
+    - name: Check formatting
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        CONFIG: ${{ inputs.config }}
+        PATHS: ${{ inputs.paths }}
+      run: bash "${{ github.action_path }}/lint.sh"
