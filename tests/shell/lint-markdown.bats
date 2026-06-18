@@ -27,28 +27,36 @@ teardown() {
 }
 
 @test "auto-discovery: omits --config when CONFIG is empty" {
-  run env GLOBS="*.md" bash "$SCRIPT"
+  run env PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   ! echo "$output" | grep -Fqe "--config"
   echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
 }
 
 @test "explicit config: passes --config when CONFIG is set" {
-  run env CONFIG=".markdownlint-cli2.jsonc" GLOBS="*.md" bash "$SCRIPT"
+  run env CONFIG=".markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -Fq "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc *.md"
 }
 
-@test "multi-glob: splits GLOBS on whitespace into separate arguments" {
+@test "multi-path: splits PATHS on whitespace into separate arguments" {
   mkdir -p "$TEST_TEMP_DIR/docs"
   touch "$TEST_TEMP_DIR/docs/readme.md"
-  run env GLOBS="*.md docs/*.md" bash "$SCRIPT"
+  run env PATHS="*.md docs/*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -Fq "markdownlint-cli2 args: *.md docs/*.md"
 }
 
-@test "GLOBS unset fails with required error" {
+@test "PATHS unset: defaults to ." {
   run env bash "$SCRIPT"
-  [ "$status" -ne 0 ]
-  echo "$output" | grep -q "GLOBS is required"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 args: \.$"
+}
+
+@test "working directory: cds to WORKING_DIRECTORY before running" {
+  mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/fixture.md"
+  run env PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
 }
