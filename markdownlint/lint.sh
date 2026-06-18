@@ -12,4 +12,4 @@ if [[ -n "${CONFIG:-}" ]]; then
   args+=(--config "$CONFIG")
 fi
 
-markdownlint-cli2 ${args[@]+"${args[@]}"} ${GLOBS:?GLOBS is required}
+markdownlint-cli2 ${args[@]+"${args[@]}"} "${GLOBS:?GLOBS is required}"

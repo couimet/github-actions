@@ -1,5 +1,5 @@
 name: 'Setup Node.js & pnpm'
-description: 'Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack from the consuming repo''s package.json packageManager field.'
+description: "Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack from the consuming repo's package.json packageManager field."
 
 inputs:
   node-version:
