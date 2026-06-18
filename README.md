@@ -54,6 +54,24 @@ steps:
   - uses: couimet/github-actions/install-deps@main
 ```
 
+### `markdownlint`
+
+Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) at a pinned npm version. The step fails on any lint error.
+
+| Input | Required | Default | Description |
+| --- | --- | --- | --- |
+| `markdownlint-version` | no | `0.22.1` | Version of the `markdownlint-cli2` npm package; pinned for local/CI parity. |
+| `config` | no | `.markdownlint-cli2.jsonc` | Path to the config file passed as `--config`. |
+| `globs` | no | `**/*.md` | Glob(s) of Markdown files to lint. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: couimet/github-actions/markdownlint@main
+```
+
 ### `setup-node-pnpm`
 
 Installs Node.js (reading the version from the consuming repo's `.nvmrc` unless overridden) and activates pnpm via Corepack from the consuming repo's `package.json` `packageManager` field.
@@ -78,7 +96,7 @@ steps:
 
 ## Versioning
 
-Consumers reference actions with `@main` for now, which keeps friction low while only three actions exist. No version tags exist yet. When the first stable release cycle warrants it, this repository will adopt per-action compound tags (`setup-node-pnpm/v1.2.3`, `install-deps/v1.0.0`, and so on). See [`docs/ADR/`](./docs/ADR/) for the rationale and the migration plan.
+Consumers reference actions with `@main` for now, which keeps friction low while the action set is small and every consumer is under the same maintainer. No version tags exist yet. When the first stable release cycle warrants it, this repository will adopt per-action compound tags (`setup-node-pnpm/v1.2.3`, `install-deps/v1.0.0`, and so on). See [`docs/ADR/`](./docs/ADR/) for the rationale and the migration plan.
 
 ## Documentation
 
