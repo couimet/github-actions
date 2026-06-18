@@ -6,6 +6,8 @@ inputs:
     required: false
     default: '0.22.1'
   config:
+    # Empty default triggers auto-discovery rather than hardcoding a filename —
+    # this works for repos with any config name, including split configs.
     description: 'Path to a markdownlint-cli2 config file passed as --config. When empty, auto-discovers all config files at the repo root (supports split configs).'
     required: false
     default: ''
@@ -19,7 +21,9 @@ runs:
   steps:
     - name: Install markdownlint-cli2
       shell: bash
-      run: npm install -g markdownlint-cli2@${{ inputs.markdownlint-version }}
+      env:
+        MARKDOWNLINT_VERSION: ${{ inputs.markdownlint-version }}
+      run: npm install -g markdownlint-cli2@$MARKDOWNLINT_VERSION
 
     - name: Lint
       shell: bash

@@ -29,14 +29,14 @@ teardown() {
 @test "auto-discovery: omits --config when CONFIG is empty" {
   run env GLOBS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  ! echo "$output" | grep -q "\-\-config"
+  ! echo "$output" | grep -Fqe "--config"
   echo "$output" | grep -q "markdownlint-cli2 args: fixture.md$"
 }
 
 @test "explicit config: passes --config when CONFIG is set" {
   run env CONFIG=".markdownlint-cli2.jsonc" GLOBS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  echo "$output" | grep -q "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc fixture.md$"
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc fixture.md"
 }
 
 @test "GLOBS unset fails with required error" {

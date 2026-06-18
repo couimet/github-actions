@@ -61,7 +61,7 @@ Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/mark
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
 | `markdownlint-version` | no | `0.22.1` | Version of the `markdownlint-cli2` npm package; pinned for local/CI parity. |
-| `config` | no | `.markdownlint-cli2.jsonc` | Path to the config file passed as `--config`. |
+| `config` | no | (empty) | Path to a config file passed as `--config`. When empty, auto-discovers all config files at the repo root (supports split configs). |
 | `globs` | no | `**/*.md` | Glob(s) of Markdown files to lint. |
 
 This action has no outputs; success or failure is reported through the step exit code.
