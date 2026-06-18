@@ -41,6 +41,12 @@ jobs:
       - name: Lint markdown
         uses: ./markdownlint
 
+      - name: Check formatting
+        run: make fmt-check
+
+      - name: Lint shell scripts
+        run: make lint-sh
+
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
