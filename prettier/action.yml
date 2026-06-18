@@ -25,7 +25,7 @@ runs:
       shell: bash
       env:
         PRETTIER_VERSION: ${{ inputs.prettier-version }}
-      run: npm install -g prettier@$PRETTIER_VERSION
+      run: npm install -g "prettier@$PRETTIER_VERSION"
 
     - name: Check formatting
       shell: bash

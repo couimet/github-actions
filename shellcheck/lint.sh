@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../scripts/_lint-helpers.sh"
 
 EXTENSIONS="${EXTENSIONS:-sh bash}"
-EXCLUDE="${EXCLUDE:-.claude-work .history node_modules .git}"
+EXCLUDE="${EXCLUDE-.claude-work .history node_modules .git}"
 
 # Build find -name arguments from space-separated extensions.
 IFS=' ' read -ra ext_arr <<< "$EXTENSIONS"

@@ -10,7 +10,7 @@ set -euo pipefail
 # Inputs (env):
 #   VERSIONS_MK_PATH  path to versions.mk (default: <repo_root>/versions.mk)
 #   ACTION_ROOT       dir containing action subdirectories (default: <repo_root>)
-#   CHECKS            space-or-newline-separated list of var:dir:input entries
+#   CHECKS            space-or-newline-separated list of var dir input entries
 #                     (default: hardcoded list below)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

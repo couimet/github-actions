@@ -11,6 +11,7 @@ setup() {
   mkdir -p "$TEST_TEMP_DIR/bin"
   cat > "$TEST_TEMP_DIR/bin/prettier" <<'ENDOFSTUB'
 #!/usr/bin/env bash
+echo "prettier pwd: $(pwd)"
 echo "prettier args: $*"
 exit 0
 ENDOFSTUB
@@ -44,7 +45,9 @@ teardown() {
 
 @test "working directory: cds to WORKING_DIRECTORY before running" {
   mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/test.js"
   run env WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier pwd: .*/subdir$"
   echo "$output" | grep -q "prettier args: --check .$"
 }
