@@ -1,0 +1,33 @@
+name: 'Run markdownlint'
+description: 'Installs markdownlint-cli2 at a pinned version via npm and lints Markdown files against a configurable glob and config file. The version pin gives exact parity with a local `npm install -g markdownlint-cli2@<version>`.'
+inputs:
+  markdownlint-version:
+    description: 'Version of the markdownlint-cli2 npm package to install globally.'
+    required: false
+    default: '0.22.1'
+  config:
+    # Empty default triggers auto-discovery rather than hardcoding a filename —
+    # this works for repos with any config name, including split configs.
+    description: 'Path to a markdownlint-cli2 config file passed as --config. When empty, auto-discovers all config files at the repo root (supports split configs).'
+    required: false
+    default: ''
+  globs:
+    description: 'Glob(s) of Markdown files to lint.'
+    required: false
+    default: '**/*.md'
+
+runs:
+  using: composite
+  steps:
+    - name: Install markdownlint-cli2
+      shell: bash
+      env:
+        MARKDOWNLINT_VERSION: ${{ inputs.markdownlint-version }}
+      run: npm install -g markdownlint-cli2@$MARKDOWNLINT_VERSION
+
+    - name: Lint
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        GLOBS: ${{ inputs.globs }}
+      run: bash "${{ github.action_path }}/lint.sh"

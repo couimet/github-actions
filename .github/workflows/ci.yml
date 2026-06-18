@@ -38,6 +38,9 @@ jobs:
           CACHE_HIT: ${{ steps.install.outputs.cache-hit }}
         run: bash ./scripts/verify-versions.sh
 
+      - name: Lint markdown
+        uses: ./markdownlint
+
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
