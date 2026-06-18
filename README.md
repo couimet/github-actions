@@ -98,7 +98,7 @@ steps:
 
 | Target                 | What                                                                                                |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `make check`           | Run `lint` and `test` — the same gate CI runs on push.                                              |
+| `make check`           | Run `lint`, `test`, and `check-actions` — the same gate CI runs on push.                            |
 | `make fmt-check`       | Check formatting with Prettier; exits non-zero if any file needs formatting.                        |
 | `make format`          | Apply Prettier formatting to all supported files.                                                   |
 | `make install-prereqs` | Check that required system tools are installed and print install instructions for any missing tool. |
@@ -106,7 +106,7 @@ steps:
 | `make lint-fix`        | Run `lint-md-fix` and `format`.                                                                     |
 | `make test`            | Run BATS shell tests.                                                                               |
 
-Fine-grained targets (`lint-md`, `lint-md-fix`, `lint-sh`) are available for individual tool runs. Run `make install-prereqs` to verify your dev environment before `make check`.
+Fine-grained targets (`check-actions`, `lint-md`, `lint-md-fix`, `lint-sh`) are available for individual tool runs. Run `make install-prereqs` to verify your dev environment before `make check`.
 
 ## Versioning
 

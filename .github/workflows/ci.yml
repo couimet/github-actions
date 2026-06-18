@@ -18,6 +18,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Verify action coverage
+        run: make check-actions
+
       - name: Setup Node.js & pnpm
         id: setup
         uses: ./setup-node-pnpm
