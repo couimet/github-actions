@@ -1,0 +1,49 @@
+name: 'Coverage comment'
+description: 'Posts a PR comment with Jest coverage summaries and optional JUnit test stats. Wraps MishaKav/jest-coverage-comment with monorepo auto-discovery.'
+
+inputs:
+  github-token:
+    description: 'GitHub token for posting PR comments. Pass secrets.GITHUB_TOKEN from the consuming workflow.'
+    required: true
+  working-directory:
+    description: 'Directory to search for coverage-summary.json files.'
+    required: false
+    default: '.'
+  title:
+    description: 'Title for the PR comment.'
+    required: false
+    default: 'Coverage Report'
+  coverage-summary-path:
+    description: 'Path to a single coverage-summary.json file. When set, skips auto-discovery and uses this file directly.'
+    required: false
+    default: ''
+  junitxml-path:
+    description: 'Path to a JUnit XML file for test stats in the comment. Passed through to MishaKav/jest-coverage-comment.'
+    required: false
+    default: ''
+  create-new-comment:
+    description: "When 'true', creates a new comment on every push. When 'false', updates the existing comment."
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Discover coverage files
+      id: discover
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        COVERAGE_SUMMARY_PATH: ${{ inputs.coverage-summary-path }}
+      run: bash "${{ github.action_path }}/discover.sh"
+
+    - name: Post coverage comment
+      if: steps.discover.outputs.multiple_files != ''
+      uses: MishaKav/jest-coverage-comment@fb83bcbaeb5ca467936175796f862a2992938833
+      with:
+        github-token: ${{ inputs.github-token }}
+        title: ${{ inputs.title }}
+        create-new-comment: ${{ inputs.create-new-comment }}
+        multiple-files: ${{ steps.discover.outputs.multiple_files }}
+        junitxml-path: ${{ inputs.junitxml-path }}

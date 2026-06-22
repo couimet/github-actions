@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -82,6 +83,14 @@ jobs:
         with:
           working-directory: tests
           guard-versions: false
+
+      - name: Test coverage-comment action
+        if: github.event_name == 'pull_request'
+        uses: ./coverage-comment
+        with:
+          github-token: ${{ github.token }}
+          working-directory: tests
+          coverage-summary-path: coverage-summary.json
 
       - name: Run shell tests (BATS)
         uses: ./bats-test
