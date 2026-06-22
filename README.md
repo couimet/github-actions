@@ -33,6 +33,69 @@ steps:
       test-directory: tests/shell
 ```
 
+### `build`
+
+Runs a build command. Defaults to `pnpm build`; override `command` for non-pnpm projects (e.g., `command: make build`). The step fails if the build fails.
+
+| Input               | Required | Default      | Description                      |
+| ------------------- | -------- | ------------ | -------------------------------- |
+| `command`           | no       | `pnpm build` | Command to run for building.     |
+| `working-directory` | no       | `.`          | Directory to run the command in. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/build@main
+```
+
+### `format`
+
+Runs a format command. Defaults to `pnpm format`; override `command` for non-pnpm projects (e.g., `command: make fmt`). The step fails if any file needs formatting.
+
+| Input               | Required | Default       | Description                      |
+| ------------------- | -------- | ------------- | -------------------------------- |
+| `command`           | no       | `pnpm format` | Command to run for formatting.   |
+| `working-directory` | no       | `.`           | Directory to run the command in. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/format@main
+```
+
+### `guard-versions`
+
+Blocks PRs from merging pre-release versions to `main`. Compares base and head SHAs for pre-release semver patterns (e.g., `0.1.0-alpha.1`) in changed `package.json` files. The step fails if any pre-release version is found.
+
+| Input               | Required | Default                              | Description                   |
+| ------------------- | -------- | ------------------------------------ | ----------------------------- |
+| `base-ref`          | no       | `github.event.pull_request.base.sha` | Base ref for diff comparison. |
+| `head-ref`          | no       | `github.event.pull_request.head.sha` | Head ref for diff comparison. |
+| `working-directory` | no       | `.`                                  | Directory to run in.          |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+      fetch-depth: 0
+  - uses: couimet/github-actions/guard-versions@main
+```
+
 ### `install-deps`
 
 Restores the pnpm store from cache and runs `pnpm install --frozen-lockfile`.
@@ -52,6 +115,27 @@ steps:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
   - uses: couimet/github-actions/install-deps@main
+```
+
+### `lint`
+
+Runs a lint command. Defaults to `pnpm lint`; override `command` for non-pnpm projects (e.g., `command: eslint . --max-warnings 0`). The step fails on any lint error.
+
+| Input               | Required | Default     | Description                      |
+| ------------------- | -------- | ----------- | -------------------------------- |
+| `command`           | no       | `pnpm lint` | Command to run for linting.      |
+| `working-directory` | no       | `.`         | Directory to run the command in. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/lint@main
 ```
 
 ### `markdownlint`
@@ -135,6 +219,74 @@ steps:
     with:
       persist-credentials: false
   - uses: couimet/github-actions/shellcheck@main
+```
+
+### `test`
+
+Runs a test command. Defaults to `pnpm test`; override `command` for non-pnpm projects. The step fails if any test fails.
+
+| Input               | Required | Default     | Description                      |
+| ------------------- | -------- | ----------- | -------------------------------- |
+| `command`           | no       | `pnpm test` | Command to run for testing.      |
+| `working-directory` | no       | `.`         | Directory to run the command in. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/test@main
+```
+
+### `typescript-ci`
+
+One-step CI for TypeScript projects. Bundles `setup-node-pnpm`, `install-deps`, `format`, `lint`, `build`, `test`, and `guard-versions` into a single composite action. Use this for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
+
+| Input               | Required | Default          | Description                                                                   |
+| ------------------- | -------- | ---------------- | ----------------------------------------------------------------------------- |
+| `format-command`    | no       | `pnpm format`    | Command to run for formatting.                                                |
+| `lint-command`      | no       | `pnpm lint`      | Command to run for linting.                                                   |
+| `build-command`     | no       | `pnpm build`     | Command to run for building.                                                  |
+| `test-command`      | no       | `pnpm test`      | Command to run for testing.                                                   |
+| `guard-versions`    | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).         |
+| `working-directory` | no       | `.`              | Directory containing `package.json`.                                          |
+| `node-version`      | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/typescript-ci@main
+```
+
+For Turborepo monorepos, define root-level pnpm scripts that match the defaults so no overrides are needed (as done in `ts-npm-packages`):
+
+```jsonc
+"scripts": {
+  "build": "turbo run build",
+  "test": "turbo run test",
+  "lint": "eslint . --max-warnings 0",
+  "format": "prettier --check ."
+}
+```
+
+When a command doesn't match the `pnpm <name>` convention, use the override inputs:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/typescript-ci@main
+    with:
+      build-command: pnpm compile
 ```
 
 ## Development

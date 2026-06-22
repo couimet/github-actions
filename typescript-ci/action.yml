@@ -1,0 +1,75 @@
+name: 'TypeScript CI'
+description: 'One-step CI for TypeScript projects: setup Node.js & pnpm, install deps, format, lint, build, test, and guard versions.'
+inputs:
+  format-command:
+    description: 'Command to run for formatting.'
+    required: false
+    default: 'pnpm format'
+  lint-command:
+    description: 'Command to run for linting.'
+    required: false
+    default: 'pnpm lint'
+  build-command:
+    description: 'Command to run for building.'
+    required: false
+    default: 'pnpm build'
+  test-command:
+    description: 'Command to run for testing.'
+    required: false
+    default: 'pnpm test'
+  guard-versions:
+    description: 'Whether to run guard-versions (block pre-release versions on main).'
+    required: false
+    default: 'true'
+  working-directory:
+    description: 'Directory containing package.json.'
+    required: false
+    default: '.'
+  node-version:
+    description: 'Node.js version override. When empty, reads .nvmrc from the consuming repo.'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js & pnpm
+      uses: couimet/github-actions/setup-node-pnpm@main
+      with:
+        node-version: ${{ inputs.node-version }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Install dependencies
+      uses: couimet/github-actions/install-deps@main
+      with:
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Format
+      uses: couimet/github-actions/format@main
+      with:
+        command: ${{ inputs.format-command }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Lint
+      uses: couimet/github-actions/lint@main
+      with:
+        command: ${{ inputs.lint-command }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Build
+      uses: couimet/github-actions/build@main
+      with:
+        command: ${{ inputs.build-command }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Test
+      uses: couimet/github-actions/test@main
+      with:
+        command: ${{ inputs.test-command }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Guard versions
+      if: inputs.guard-versions == 'true'
+      uses: couimet/github-actions/guard-versions@main
+      with:
+        working-directory: ${{ inputs.working-directory }}

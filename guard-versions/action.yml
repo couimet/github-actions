@@ -1,0 +1,26 @@
+name: 'Guard versions'
+description: 'Blocks PRs from merging pre-release versions to main. Checks changed package.json files for pre-release semver patterns (e.g., 0.1.0-alpha.1).'
+inputs:
+  base-ref:
+    description: 'Base ref for diff comparison. Defaults to github.event.pull_request.base.sha.'
+    required: false
+    default: ''
+  head-ref:
+    description: 'Head ref for diff comparison. Defaults to github.event.pull_request.head.sha.'
+    required: false
+    default: ''
+  working-directory:
+    description: 'Directory to run in.'
+    required: false
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Guard versions
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BASE_REF: ${{ inputs.base-ref || github.event.pull_request.base.sha }}
+        HEAD_REF: ${{ inputs.head-ref || github.event.pull_request.head.sha }}
+      run: bash "${{ github.action_path }}/guard.sh"
