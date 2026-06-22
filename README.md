@@ -12,14 +12,14 @@ Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a direct
 
 | Input             | Required | Default  | Description                                                                          |
 | ----------------- | -------- | -------- | ------------------------------------------------------------------------------------ |
-| `test-directory`  | no       | `tests/` | Directory containing `.bats` test files.                                             |
-| `bats-version`    | no       | `1.13.0` | BATS version installed; pinned so CI matches the local brew stable.                  |
-| `support-install` | no       | `false`  | Install the `bats-support` helper library.                                           |
 | `assert-install`  | no       | `false`  | Install the `bats-assert` helper library.                                            |
-| `file-install`    | no       | `false`  | Install the `bats-file` helper library.                                              |
+| `bats-version`    | no       | `1.13.0` | BATS version installed; pinned so CI matches the local brew stable.                  |
 | `detik-install`   | no       | `false`  | Install the `detik` helper library.                                                  |
+| `file-install`    | no       | `false`  | Install the `bats-file` helper library.                                              |
 | `formatter`       | no       | (empty)  | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
 | `recursive`       | no       | `false`  | Recurse into subdirectories of `test-directory`.                                     |
+| `support-install` | no       | `false`  | Install the `bats-support` helper library.                                           |
+| `test-directory`  | no       | `tests/` | Directory containing `.bats` test files.                                             |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -54,6 +54,24 @@ steps:
   - uses: couimet/github-actions/build@main
 ```
 
+### `check-no-prerelease-deps`
+
+Scans all `package.json` files under the working directory for prerelease dependency patterns (`-alpha`, `-beta`, `-rc`, `-pre`) in `dependencies`, `devDependencies`, `peerDependencies`, and `optionalDependencies`. The step fails if any prerelease dependency is found. Used in CI to prevent accidentally depending on prerelease packages in main-branch PRs.
+
+| Input               | Required | Default | Description                           |
+| ------------------- | -------- | ------- | ------------------------------------- |
+| `working-directory` | no       | `.`     | Directory to scan for `package.json`. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/check-no-prerelease-deps@main
+```
+
 ### `coverage-comment`
 
 Posts a PR comment with Jest coverage summaries and optional JUnit test stats. Wraps [MishaKav/jest-coverage-comment](https://github.com/MishaKav/jest-coverage-comment) with monorepo auto-discovery: when `coverage-summary-path` is not set, the action discovers all `coverage-summary.json` files under `working-directory` (excluding `node_modules`) and maps each to a per-package section in the comment. On subsequent pushes, the same comment is updated rather than creating duplicates.
@@ -62,12 +80,12 @@ The consuming workflow's job needs `pull-requests: write` in its `permissions:` 
 
 | Input                   | Required | Default           | Description                                                                                                           |
 | ----------------------- | -------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `github-token`          | yes      | (none)            | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN` from the consuming workflow.                        |
-| `working-directory`     | no       | `.`               | Directory to search for `coverage-summary.json` files.                                                                |
-| `title`                 | no       | `Coverage Report` | Title for the PR comment. In monorepos, per-package section titles are auto-derived from file paths.                                                |
 | `coverage-summary-path` | no       | (empty)           | Path to a single `coverage-summary.json` file. When set, skips auto-discovery and uses this file directly.            |
-| `junitxml-path`         | no       | (empty)           | Path to a JUnit XML file for test stats in the comment. Requires `jest-junit` in the consuming project's Jest config. |
 | `create-new-comment`    | no       | `false`           | When `true`, creates a new comment on every push. When `false`, updates the existing comment.                         |
+| `github-token`          | yes      | (none)            | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN` from the consuming workflow.                        |
+| `junitxml-path`         | no       | (empty)           | Path to a JUnit XML file for test stats in the comment. Requires `jest-junit` in the consuming project's Jest config. |
+| `title`                 | no       | `Coverage Report` | Title for the PR comment. In monorepos, per-package section titles are auto-derived from file paths.                  |
+| `working-directory`     | no       | `.`               | Directory to search for `coverage-summary.json` files.                                                                |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -174,8 +192,8 @@ Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/mark
 
 | Input                  | Required | Default   | Description                                                                                                                        |
 | ---------------------- | -------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `markdownlint-version` | no       | `0.22.1`  | Version of the `markdownlint-cli2` npm package; pinned for local/CI parity.                                                        |
 | `config`               | no       | (empty)   | Path to a config file passed as `--config`. When empty, auto-discovers all config files at the repo root (supports split configs). |
+| `markdownlint-version` | no       | `0.22.1`  | Version of the `markdownlint-cli2` npm package; pinned for local/CI parity.                                                        |
 | `paths`                | no       | `**/*.md` | Space-separated glob(s) of Markdown files to lint.                                                                                 |
 | `working-directory`    | no       | `.`       | Directory to run markdownlint in. Set when the target lives in a subdirectory.                                                     |
 
@@ -193,10 +211,10 @@ Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version.
 
 | Input               | Required | Default | Description                                                                                                      |
 | ------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.             |
+| `paths`             | no       | `.`     | Space-separated path(s) passed to `prettier --check`; the consuming repo's `.prettierignore` governs exclusions. |
 | `prettier-version`  | no       | `3.8.4` | Version of the `prettier` npm package installed globally; pinned for local/CI parity, overridable.               |
 | `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                       |
-| `paths`             | no       | `.`     | Space-separated path(s) passed to `prettier --check`; the consuming repo's `.prettierignore` governs exclusions. |
-| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.             |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -236,9 +254,9 @@ Lints shell scripts with [shellcheck](https://www.shellcheck.net/) (preinstalled
 
 | Input        | Required | Default                                   | Description                                                |
 | ------------ | -------- | ----------------------------------------- | ---------------------------------------------------------- |
-| `paths`      | no       | `.`                                       | Root to search for shell scripts.                          |
-| `extensions` | no       | `sh bash`                                 | Space-separated file extensions to lint.                   |
 | `exclude`    | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.   |
+| `extensions` | no       | `sh bash`                                 | Space-separated file extensions to lint.                   |
+| `paths`      | no       | `.`                                       | Root to search for shell scripts.                          |
 | `severity`   | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`). |
 
 This action has no outputs; success or failure is reported through the step exit code.
@@ -274,20 +292,21 @@ steps:
 
 ### `typescript-ci`
 
-One-step CI for TypeScript projects. Bundles `setup-node-pnpm`, `install-deps`, `format`, `lint`, `build`, `test`, `coverage-comment`, and `guard-versions` into a single composite action. Use this for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
+One-step CI for TypeScript projects. Bundles `setup-node-pnpm`, `install-deps`, `format`, `lint`, `build`, `test`, `coverage-comment`, `check-no-prerelease-deps`, and `guard-versions` into a single composite action. Use this for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
 
 The `coverage-comment` step posts a PR comment with Jest coverage summaries and optional test stats. It only runs on `pull_request` events. The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
-| Input               | Required | Default          | Description                                                                                                |
-| ------------------- | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| `format-command`    | no       | `pnpm format`    | Command to run for formatting.                                                                             |
-| `lint-command`      | no       | `pnpm lint`      | Command to run for linting.                                                                                |
-| `build-command`     | no       | `pnpm build`     | Command to run for building.                                                                               |
-| `test-command`      | no       | `pnpm test`      | Command to run for testing.                                                                                |
-| `guard-versions`    | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                      |
-| `working-directory` | no       | `.`              | Directory containing `package.json`.                                                                       |
-| `node-version`      | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                              |
-| `coverage-comment`  | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job. |
+| Input                      | Required | Default          | Description                                                                                                |
+| -------------------------- | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `build-command`            | no       | `pnpm build`     | Command to run for building.                                                                               |
+| `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.                                     |
+| `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job. |
+| `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                                             |
+| `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                      |
+| `lint-command`             | no       | `pnpm lint`      | Command to run for linting.                                                                                |
+| `node-version`             | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                              |
+| `test-command`             | no       | `pnpm test`      | Command to run for testing.                                                                                |
+| `working-directory`        | no       | `.`              | Directory containing `package.json`.                                                                       |
 
 This action has no outputs; success or failure is reported through the step exit code.
 

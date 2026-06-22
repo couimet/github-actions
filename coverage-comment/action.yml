@@ -2,29 +2,29 @@ name: 'Coverage comment'
 description: 'Posts a PR comment with Jest coverage summaries and optional JUnit test stats. Wraps MishaKav/jest-coverage-comment with monorepo auto-discovery.'
 
 inputs:
-  github-token:
-    description: 'GitHub token for posting PR comments. Pass secrets.GITHUB_TOKEN from the consuming workflow.'
-    required: true
-  working-directory:
-    description: 'Directory to search for coverage-summary.json files.'
-    required: false
-    default: '.'
-  title:
-    description: 'Title for the PR comment.'
-    required: false
-    default: 'Coverage Report'
   coverage-summary-path:
     description: 'Path to a single coverage-summary.json file. When set, skips auto-discovery and uses this file directly.'
-    required: false
-    default: ''
-  junitxml-path:
-    description: 'Path to a JUnit XML file for test stats in the comment. Passed through to MishaKav/jest-coverage-comment.'
     required: false
     default: ''
   create-new-comment:
     description: "When 'true', creates a new comment on every push. When 'false', updates the existing comment."
     required: false
     default: 'false'
+  github-token:
+    description: 'GitHub token for posting PR comments. Pass secrets.GITHUB_TOKEN from the consuming workflow.'
+    required: true
+  junitxml-path:
+    description: 'Path to a JUnit XML file for test stats in the comment. Passed through to MishaKav/jest-coverage-comment.'
+    required: false
+    default: ''
+  title:
+    description: 'Title for the PR comment.'
+    required: false
+    default: 'Coverage Report'
+  working-directory:
+    description: 'Directory to search for coverage-summary.json files.'
+    required: false
+    default: '.'
 
 runs:
   using: composite

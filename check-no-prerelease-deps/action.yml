@@ -1,0 +1,15 @@
+name: 'Check no prerelease deps'
+description: 'Fail if any package.json declares a prerelease npm dependency (alpha, beta, rc, pre). Scans dependencies, devDependencies, peerDependencies, and optionalDependencies.'
+inputs:
+  working-directory:
+    description: 'Directory to scan for package.json files.'
+    required: false
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Check no prerelease deps
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bash "${{ github.action_path }}/check-no-prerelease-deps.sh"
