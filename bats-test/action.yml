@@ -2,28 +2,20 @@ name: 'Run BATS tests'
 description: 'Runs BATS tests against a configurable directory by wrapping the SHA-pinned bats-core/bats-action. BATS version is pinned for reproducibility and parity with the local brew stable.'
 
 inputs:
-  test-directory:
-    description: 'Directory containing .bats test files.'
-    required: false
-    default: 'tests/'
-  bats-version:
-    description: 'BATS version installed by bats-core/bats-action. Pinned (not floating on latest) so CI matches the local brew stable.'
-    required: false
-    default: '1.13.0'
-  support-install:
-    description: 'Install the bats-support helper library.'
-    required: false
-    default: 'false'
   assert-install:
     description: 'Install the bats-assert helper library.'
     required: false
     default: 'false'
-  file-install:
-    description: 'Install the bats-file helper library.'
+  bats-version:
+    description: 'BATS version installed by bats-core/bats-action. Pinned (not floating on latest) so CI matches the local brew stable.'
     required: false
-    default: 'false'
+    default: '1.13.0'
   detik-install:
     description: 'Install the bats-detik helper library.'
+    required: false
+    default: 'false'
+  file-install:
+    description: 'Install the bats-file helper library.'
     required: false
     default: 'false'
   formatter:
@@ -34,6 +26,14 @@ inputs:
     description: 'Recurse into subdirectories of test-directory.'
     required: false
     default: 'false'
+  support-install:
+    description: 'Install the bats-support helper library.'
+    required: false
+    default: 'false'
+  test-directory:
+    description: 'Directory containing .bats test files.'
+    required: false
+    default: 'tests/'
 
 runs:
   using: composite

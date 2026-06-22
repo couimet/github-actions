@@ -1,38 +1,42 @@
 name: 'TypeScript CI'
 description: 'One-step CI for TypeScript projects: setup Node.js & pnpm, install deps, format, lint, build, test, and guard versions.'
 inputs:
-  format-command:
-    description: 'Command to run for formatting.'
-    required: false
-    default: 'pnpm format'
-  lint-command:
-    description: 'Command to run for linting.'
-    required: false
-    default: 'pnpm lint'
   build-command:
     description: 'Command to run for building.'
     required: false
     default: 'pnpm build'
-  test-command:
-    description: 'Command to run for testing.'
-    required: false
-    default: 'pnpm test'
-  guard-versions:
-    description: 'Whether to run guard-versions (block pre-release versions on main).'
+  check-no-prerelease-deps:
+    description: 'Whether to check for prerelease dependency patterns in package.json.'
     required: false
     default: 'true'
-  working-directory:
-    description: 'Directory containing package.json.'
-    required: false
-    default: '.'
-  node-version:
-    description: 'Node.js version override. When empty, reads .nvmrc from the consuming repo.'
-    required: false
-    default: ''
   coverage-comment:
     description: "Whether to post a coverage report as a PR comment after tests. Requires 'pull-requests: write' on the job."
     required: false
     default: 'true'
+  format-command:
+    description: 'Command to run for formatting.'
+    required: false
+    default: 'pnpm format'
+  guard-versions:
+    description: 'Whether to run guard-versions (block pre-release versions on main).'
+    required: false
+    default: 'true'
+  lint-command:
+    description: 'Command to run for linting.'
+    required: false
+    default: 'pnpm lint'
+  node-version:
+    description: 'Node.js version override. When empty, reads .nvmrc from the consuming repo.'
+    required: false
+    default: ''
+  test-command:
+    description: 'Command to run for testing.'
+    required: false
+    default: 'pnpm test'
+  working-directory:
+    description: 'Directory containing package.json.'
+    required: false
+    default: '.'
 
 runs:
   using: composite
@@ -82,5 +86,11 @@ runs:
     - name: Guard versions
       if: inputs.guard-versions == 'true'
       uses: couimet/github-actions/guard-versions@main
+      with:
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Check prerelease deps
+      if: inputs.check-no-prerelease-deps == 'true'
+      uses: couimet/github-actions/check-no-prerelease-deps@main
       with:
         working-directory: ${{ inputs.working-directory }}
