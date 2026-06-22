@@ -2,5 +2,11 @@
   "name": "github-actions-self-test",
   "private": true,
   "description": "Self-test fixture exercised by .github/workflows/ci.yml. Not published.",
-  "packageManager": "pnpm@11.7.0"
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "format": "echo 'format ok'",
+    "lint": "echo 'lint ok'",
+    "build": "echo 'build ok'",
+    "test": "echo 'test ok'"
+  }
 }

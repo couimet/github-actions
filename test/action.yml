@@ -1,0 +1,19 @@
+name: 'Run test'
+description: 'Runs a test command. Defaults to pnpm test.'
+inputs:
+  command:
+    description: 'Command to run for testing.'
+    required: false
+    default: 'pnpm test'
+  working-directory:
+    description: 'Directory to run the command in.'
+    required: false
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Run test
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.command }}

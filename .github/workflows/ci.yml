@@ -50,6 +50,39 @@ jobs:
       - name: Lint shell scripts
         uses: ./shellcheck
 
+      - name: Test format action
+        uses: ./format
+        with:
+          working-directory: tests
+
+      - name: Test lint action
+        uses: ./lint
+        with:
+          working-directory: tests
+
+      - name: Test build action
+        uses: ./build
+        with:
+          working-directory: tests
+
+      - name: Test test action
+        uses: ./test
+        with:
+          working-directory: tests
+
+      - name: Test guard-versions action
+        uses: ./guard-versions
+        with:
+          working-directory: tests
+          base-ref: HEAD
+          head-ref: HEAD
+
+      - name: Test typescript-ci action
+        uses: ./typescript-ci
+        with:
+          working-directory: tests
+          guard-versions: false
+
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
