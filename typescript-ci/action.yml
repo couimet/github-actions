@@ -29,6 +29,10 @@ inputs:
     description: 'Node.js version override. When empty, reads .nvmrc from the consuming repo.'
     required: false
     default: ''
+  coverage-comment:
+    description: "Whether to post a coverage report as a PR comment after tests. Requires 'pull-requests: write' on the job."
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -67,6 +71,12 @@ runs:
       with:
         command: ${{ inputs.test-command }}
         working-directory: ${{ inputs.working-directory }}
+
+    - name: Post coverage report
+      if: inputs.coverage-comment == 'true' && github.event_name == 'pull_request'
+      uses: couimet/github-actions/coverage-comment@main
+      with:
+        github-token: ${{ github.token }}
 
     - name: Guard versions
       if: inputs.guard-versions == 'true'

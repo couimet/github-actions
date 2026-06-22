@@ -54,6 +54,36 @@ steps:
   - uses: couimet/github-actions/build@main
 ```
 
+### `coverage-comment`
+
+Posts a PR comment with Jest coverage summaries and optional JUnit test stats. Wraps [MishaKav/jest-coverage-comment](https://github.com/MishaKav/jest-coverage-comment) with monorepo auto-discovery: when `coverage-summary-path` is not set, the action discovers all `coverage-summary.json` files under `working-directory` (excluding `node_modules`) and maps each to a per-package section in the comment. On subsequent pushes, the same comment is updated rather than creating duplicates.
+
+The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
+
+| Input                   | Required | Default           | Description                                                                                                           |
+| ----------------------- | -------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `github-token`          | yes      | (none)            | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN` from the consuming workflow.                        |
+| `working-directory`     | no       | `.`               | Directory to search for `coverage-summary.json` files.                                                                |
+| `title`                 | no       | `Coverage Report` | Title for the PR comment. Monorepo callers can set per-package titles.                                                |
+| `coverage-summary-path` | no       | (empty)           | Path to a single `coverage-summary.json` file. When set, skips auto-discovery and uses this file directly.            |
+| `junitxml-path`         | no       | (empty)           | Path to a JUnit XML file for test stats in the comment. Requires `jest-junit` in the consuming project's Jest config. |
+| `create-new-comment`    | no       | `false`           | When `true`, creates a new comment on every push. When `false`, updates the existing comment.                         |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/test@main
+  - uses: couimet/github-actions/coverage-comment@main
+    with:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
 ### `format`
 
 Runs a format command. Defaults to `pnpm format`; override `command` for non-pnpm projects (e.g., `command: make fmt`). The step fails if any file needs formatting.
@@ -244,17 +274,20 @@ steps:
 
 ### `typescript-ci`
 
-One-step CI for TypeScript projects. Bundles `setup-node-pnpm`, `install-deps`, `format`, `lint`, `build`, `test`, and `guard-versions` into a single composite action. Use this for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
+One-step CI for TypeScript projects. Bundles `setup-node-pnpm`, `install-deps`, `format`, `lint`, `build`, `test`, `coverage-comment`, and `guard-versions` into a single composite action. Use this for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
 
-| Input               | Required | Default          | Description                                                                   |
-| ------------------- | -------- | ---------------- | ----------------------------------------------------------------------------- |
-| `format-command`    | no       | `pnpm format`    | Command to run for formatting.                                                |
-| `lint-command`      | no       | `pnpm lint`      | Command to run for linting.                                                   |
-| `build-command`     | no       | `pnpm build`     | Command to run for building.                                                  |
-| `test-command`      | no       | `pnpm test`      | Command to run for testing.                                                   |
-| `guard-versions`    | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).         |
-| `working-directory` | no       | `.`              | Directory containing `package.json`.                                          |
-| `node-version`      | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo. |
+The `coverage-comment` step posts a PR comment with Jest coverage summaries and optional test stats. It only runs on `pull_request` events. The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
+
+| Input               | Required | Default          | Description                                                                                                |
+| ------------------- | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `format-command`    | no       | `pnpm format`    | Command to run for formatting.                                                                             |
+| `lint-command`      | no       | `pnpm lint`      | Command to run for linting.                                                                                |
+| `build-command`     | no       | `pnpm build`     | Command to run for building.                                                                               |
+| `test-command`      | no       | `pnpm test`      | Command to run for testing.                                                                                |
+| `guard-versions`    | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                      |
+| `working-directory` | no       | `.`              | Directory containing `package.json`.                                                                       |
+| `node-version`      | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                              |
+| `coverage-comment`  | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job. |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
