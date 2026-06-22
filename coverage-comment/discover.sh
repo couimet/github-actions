@@ -4,12 +4,22 @@ set -euo pipefail
 working_dir="${WORKING_DIRECTORY:-.}"
 coverage_summary_path="${COVERAGE_SUMMARY_PATH:-}"
 
+derive_title() {
+  local path="$1"
+  local t
+  t="$(basename "$(dirname "$(dirname "$path")")")"
+  if [[ "$t" == "." || "$t" == "/" || -z "$t" ]]; then
+    t="Coverage Report"
+  fi
+  printf '%s' "$t"
+}
+
 cd "$working_dir"
 
 if [[ -n "$coverage_summary_path" ]]; then
   # Single path override: extract title from the directory two levels up.
   # ./packages/foo/coverage/coverage-summary.json -> foo
-  title="$(basename "$(dirname "$(dirname "$coverage_summary_path")")")"
+  title="$(derive_title "$coverage_summary_path")"
   echo "multiple_files=${title}, ${coverage_summary_path}" >> "$GITHUB_OUTPUT"
   exit 0
 fi
@@ -29,7 +39,7 @@ while IFS= read -r file; do
   [[ -z "$file" ]] && continue
   # Extract title from the directory two levels up from the coverage file.
   # ./packages/rangelink-core-ts/coverage/coverage-summary.json -> rangelink-core-ts
-  title="$(basename "$(dirname "$(dirname "$file")")")"
+  title="$(derive_title "$file")"
   multiple_files+="${title}, ${file}"$'\n'
 done <<< "$maps"
 

@@ -77,6 +77,7 @@ runs:
       uses: couimet/github-actions/coverage-comment@main
       with:
         github-token: ${{ github.token }}
+        working-directory: ${{ inputs.working-directory }}
 
     - name: Guard versions
       if: inputs.guard-versions == 'true'

@@ -80,4 +80,5 @@ run_discover() {
   [ "$status" -eq 0 ]
   echo "GITHUB_OUTPUT: $(cat "$GITHUB_OUTPUT")"
   grep -q "coverage-summary.json" "$GITHUB_OUTPUT"
+  grep -q "Coverage Report, ./coverage/coverage-summary.json" "$GITHUB_OUTPUT"
 }

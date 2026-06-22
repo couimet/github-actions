@@ -64,7 +64,7 @@ The consuming workflow's job needs `pull-requests: write` in its `permissions:` 
 | ----------------------- | -------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `github-token`          | yes      | (none)            | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN` from the consuming workflow.                        |
 | `working-directory`     | no       | `.`               | Directory to search for `coverage-summary.json` files.                                                                |
-| `title`                 | no       | `Coverage Report` | Title for the PR comment. Monorepo callers can set per-package titles.                                                |
+| `title`                 | no       | `Coverage Report` | Title for the PR comment. In monorepos, per-package section titles are auto-derived from file paths.                                                |
 | `coverage-summary-path` | no       | (empty)           | Path to a single `coverage-summary.json` file. When set, skips auto-discovery and uses this file directly.            |
 | `junitxml-path`         | no       | (empty)           | Path to a JUnit XML file for test stats in the comment. Requires `jest-junit` in the consuming project's Jest config. |
 | `create-new-comment`    | no       | `false`           | When `true`, creates a new comment on every push. When `false`, updates the existing comment.                         |
