@@ -54,6 +54,18 @@ setup_repo() {
   echo "$output" | grep -q "No package.json files changed"
 }
 
+@test "pre-release in nested package when run from subdir -> exits 1" {
+  setup_repo
+  mkdir -p apps/web
+  echo '{"version": "0.3.0-beta.1"}' > apps/web/package.json
+  git add apps/web/package.json
+  git commit --quiet -m "add nested prerelease"
+  cd apps/web
+  run env BASE_REF=HEAD~1 HEAD_REF=HEAD bash "$SCRIPT"
+  [ "$status" -eq 1 ]
+  echo "$output" | grep -q "Pre-release version"
+}
+
 @test "missing ref arguments -> exits 2" {
   run env BASE_REF="" HEAD_REF="" bash "$SCRIPT"
   [ "$status" -eq 2 ]

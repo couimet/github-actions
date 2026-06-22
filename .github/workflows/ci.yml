@@ -73,6 +73,7 @@ jobs:
       - name: Test guard-versions action
         uses: ./guard-versions
         with:
+          working-directory: tests
           base-ref: HEAD
           head-ref: HEAD
 

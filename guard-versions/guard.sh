@@ -14,6 +14,9 @@ if ! changed_files=$(git diff --name-only "${base_ref}...${head_ref}" 2>/dev/nul
   exit 2
 fi
 
+# Resolve repo root so file paths from git diff work from any working directory
+repo_root=$(git rev-parse --show-toplevel)
+
 # Check for pre-release versions in changed package.json files
 echo "::group::Checking package.json version fields"
 pkg_jsons=$(echo "$changed_files" | grep 'package\.json$' || true)
@@ -26,11 +29,11 @@ fi
 had_errors=0
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
-  if [[ ! -f "$file" ]]; then
+  if [[ ! -f "$repo_root/$file" ]]; then
     echo "::warning file=${file}::File not found in working tree, skipping"
     continue
   fi
-  ver=$(jq -r '.version // empty' "$file" 2>/dev/null || true)
+  ver=$(jq -r '.version // empty' "$repo_root/$file" 2>/dev/null || true)
   if [[ -n "$ver" ]] && echo "$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+-.+'; then
     echo "::error file=${file}::Pre-release version '${ver}' found in ${file}. Use a stable semver (x.y.z) for main branch PRs."
     had_errors=1
