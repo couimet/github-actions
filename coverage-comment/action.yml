@@ -32,7 +32,6 @@ runs:
     - name: Discover coverage files
       id: discover
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
       env:
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         COVERAGE_SUMMARY_PATH: ${{ inputs.coverage-summary-path }}
