@@ -26,10 +26,10 @@ lint: install-prereqs lint-md fmt-check lint-sh
 lint-fix: install-prereqs lint-md-fix format
 
 lint-md:
-	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION)
+	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) "**/*.md"
 
 lint-md-fix:
-	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) --fix
+	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) --fix "**/*.md"
 
 lint-sh:
 	find . -type f \( -name '*.sh' -o -name '*.bash' \) -not -path '*/.claude-work/*' -not -path '*/.history/*' -not -path '*/node_modules/*' -exec shellcheck {} +
