@@ -1,0 +1,35 @@
+name: 'Publish PR comment'
+description: 'Posts a sticky PR comment. Thin wrapper around marocchino/sticky-pull-request-comment so repos avoid duplicating the version pin and wiring across CI pipelines.'
+
+inputs:
+  comment-file:
+    description: 'Path to a markdown file containing the comment body.'
+    required: true
+  github-token:
+    description: 'GitHub token for posting the comment. Pass secrets.GITHUB_TOKEN from the consuming workflow.'
+    required: true
+  header:
+    description: 'Unique header that identifies the comment across re-runs (enables sticky update behavior).'
+    required: true
+  pr-number:
+    description: 'PR number. When empty, defaults to github.event.pull_request.number.'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve PR number
+      id: resolve
+      shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr-number || github.event.pull_request.number }}
+      run: bash "${{ github.action_path }}/resolve.sh"
+
+    - name: Post sticky PR comment
+      uses: marocchino/sticky-pull-request-comment@33169d5dcc6b00c623618ba2ef9bac99f0d316c9 # v3.0.4
+      with:
+        header: ${{ inputs.header }}
+        number: ${{ steps.resolve.outputs.pr_number }}
+        path: ${{ inputs.comment-file }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
