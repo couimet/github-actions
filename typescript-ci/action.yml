@@ -9,6 +9,10 @@ inputs:
     description: 'Whether to check for prerelease dependency patterns in package.json.'
     required: false
     default: 'true'
+  check-todos:
+    description: 'Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.'
+    required: false
+    default: 'true'
   coverage-comment:
     description: "Whether to post a coverage report as a PR comment after tests. Requires 'pull-requests: write' on the job."
     required: false
@@ -94,3 +98,11 @@ runs:
       uses: couimet/github-actions/check-no-prerelease-deps@main
       with:
         working-directory: ${{ inputs.working-directory }}
+
+    - name: Check TODOs/FIXMEs
+      if: inputs.check-todos == 'true'
+      uses: couimet/github-actions/check-todos@main
+      with:
+        path: ${{ inputs.working-directory }}
+        base-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+        github-token: ${{ github.token }}
