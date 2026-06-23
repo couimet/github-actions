@@ -226,6 +226,35 @@ steps:
   - uses: couimet/github-actions/prettier@main
 ```
 
+### `publish-pr-comment`
+
+Posts a sticky PR comment. Thin wrapper around [marocchino/sticky-pull-request-comment](https://github.com/marocchino/sticky-pull-request-comment) so repos avoid duplicating the version pin and wiring across CI pipelines. The PR number defaults to the current pull request event; override `pr-number` for non-PR workflows or manual discovery.
+
+The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
+
+| Input          | Required | Default | Description                                                                                    |
+| -------------- | -------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `comment-file` | yes      | (none)  | Path to a markdown file containing the comment body.                                           |
+| `github-token` | yes      | (none)  | GitHub token for posting the comment. Pass `secrets.GITHUB_TOKEN` from the consuming workflow. |
+| `header`       | yes      | (none)  | Unique header that identifies the comment across re-runs (enables sticky update behavior).     |
+| `pr-number`    | no       | (empty) | PR number. When empty, defaults to `github.event.pull_request.number`.                         |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - name: Build comment body
+    run: scripts/build-comment.sh > /tmp/comment-body.md
+  - uses: couimet/github-actions/publish-pr-comment@main
+    with:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+      header: my-comment
+      comment-file: /tmp/comment-body.md
+```
+
 ### `setup-node-pnpm`
 
 Installs Node.js (reading the version from the consuming repo's `.nvmrc` unless overridden) and activates pnpm via Corepack from the consuming repo's `package.json` `packageManager` field.

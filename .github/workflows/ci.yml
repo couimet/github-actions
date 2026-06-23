@@ -89,6 +89,14 @@ jobs:
         with:
           working-directory: tests
 
+      - name: Test publish-pr-comment action
+        if: github.event_name == 'pull_request'
+        uses: ./publish-pr-comment
+        with:
+          github-token: ${{ github.token }}
+          header: publish-pr-comment-self-test
+          comment-file: tests/fixtures/comment-body.md
+
       - name: Test coverage-comment action
         if: github.event_name == 'pull_request'
         uses: ./coverage-comment
