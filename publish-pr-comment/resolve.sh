@@ -4,7 +4,7 @@ set -euo pipefail
 PR_NUMBER="${PR_NUMBER:-}"
 GITHUB_OUTPUT="${GITHUB_OUTPUT:-/dev/null}"
 
-if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
+if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" || ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
   echo "::error::Could not resolve PR number. Pass it via pr-number or run on a pull_request event." >&2
   exit 1
 fi

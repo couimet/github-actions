@@ -38,3 +38,10 @@ teardown() {
   run bash "$SCRIPT"
   [ "$status" -eq 1 ]
 }
+
+# T4 — non-numeric PR number fails
+@test "non-numeric PR number fails" {
+  export PR_NUMBER="abc"
+  run bash "$SCRIPT"
+  [ "$status" -eq 1 ]
+}
