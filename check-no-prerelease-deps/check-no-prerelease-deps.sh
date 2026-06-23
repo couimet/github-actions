@@ -5,8 +5,6 @@ readonly EXIT_OK=0
 readonly EXIT_FOUND_PRERELEASE=1
 readonly EXIT_MISSING_JQ=2
 
-readonly PRERELEASE_TOKENS=("-alpha" "-beta" "-rc" "-pre")
-
 _require_jq() {
   if ! command -v jq >/dev/null 2>&1; then
     echo "error: jq is required" >&2
