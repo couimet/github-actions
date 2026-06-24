@@ -26,12 +26,12 @@ Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a direct
 
 When `publish-comment` is true (the default), the action exposes these outputs:
 
-| Output      | Description                                                              |
-| ----------- | ------------------------------------------------------------------------ |
-| `total`     | Total test cases parsed from TAP output.                                    |
-| `passed`    | Number of passing tests.                                                 |
-| `failed`    | Number of failing tests (0 when all pass).                               |
-| `exit_code` | BATS exit code: 0 = all passed, 1 = one or more failures, >1 = BATS error.  |
+| Output      | Description                                                                |
+| ----------- | -------------------------------------------------------------------------- |
+| `total`     | Total test cases parsed from TAP output.                                   |
+| `passed`    | Number of passing tests.                                                   |
+| `failed`    | Number of failing tests (0 when all pass).                                 |
+| `exit_code` | BATS exit code: 0 = all passed, 1 = one or more failures, >1 = BATS error. |
 
 When `publish-comment` is false, no outputs are set; success or failure is reported through the step exit code alone.
 
