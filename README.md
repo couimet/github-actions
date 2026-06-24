@@ -8,20 +8,32 @@ Listed alphabetically.
 
 ### `bats-test`
 
-Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a directory of `.bats` files. The step fails when any test fails.
+Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a directory of `.bats` files. The step fails when any test fails. By default, posts a sticky PR comment with test result counts via `publish-pr-comment` (set `publish-comment: 'false'` to opt out). The consuming workflow's job needs `pull-requests: write` in its `permissions:` block when comment publishing is active.
 
-| Input             | Required | Default       | Description                                                                          |
-| ----------------- | -------- | ------------- | ------------------------------------------------------------------------------------ |
-| `assert-install`  | no       | `true`        | Install the `bats-assert` helper library.                                            |
-| `bats-version`    | no       | `1.13.0`      | BATS version installed; pinned so CI matches the local brew stable.                  |
-| `detik-install`   | no       | `false`       | Install the `detik` helper library.                                                  |
-| `file-install`    | no       | `false`       | Install the `bats-file` helper library.                                              |
-| `formatter`       | no       | (empty)       | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
-| `recursive`       | no       | `true`        | Recurse into subdirectories of `test-directory`.                                     |
-| `support-install` | no       | `true`        | Install the `bats-support` helper library.                                           |
-| `test-directory`  | no       | `bats-tests/` | Directory containing `.bats` test files.                                             |
+| Input             | Required | Default             | Description                                                                          |
+| ----------------- | -------- | ------------------- | ------------------------------------------------------------------------------------ |
+| `assert-install`  | no       | `true`              | Install the `bats-assert` helper library.                                            |
+| `bats-version`    | no       | `1.13.0`            | BATS version installed; pinned so CI matches the local brew stable.                  |
+| `comment-header`  | no       | `BATS Test Results` | Unique header that identifies the BATS comment across re-runs (sticky update).       |
+| `detik-install`   | no       | `false`             | Install the `detik` helper library.                                                  |
+| `file-install`    | no       | `false`             | Install the `bats-file` helper library.                                              |
+| `formatter`       | no       | (empty)             | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
+| `github-token`    | no       | (empty)             | GitHub token for posting the comment. Required only when `publish-comment` is true.  |
+| `publish-comment` | no       | `true`              | Post a sticky PR comment with test result counts. Set to `false` to opt out.         |
+| `recursive`       | no       | `true`              | Recurse into subdirectories of `test-directory`.                                     |
+| `support-install` | no       | `true`              | Install the `bats-support` helper library.                                           |
+| `test-directory`  | no       | `bats-tests/`       | Directory containing `.bats` test files.                                             |
 
-This action has no outputs; success or failure is reported through the step exit code.
+When `publish-comment` is true (the default), the action exposes these outputs:
+
+| Output      | Description                                                              |
+| ----------- | ------------------------------------------------------------------------ |
+| `total`     | Total test cases parsed from TAP output.                                    |
+| `passed`    | Number of passing tests.                                                 |
+| `failed`    | Number of failing tests (0 when all pass).                               |
+| `exit_code` | BATS exit code: 0 = all passed, 1 = one or more failures, >1 = BATS error.  |
+
+When `publish-comment` is false, no outputs are set; success or failure is reported through the step exit code alone.
 
 ```yaml
 steps:
@@ -31,6 +43,7 @@ steps:
   - uses: couimet/github-actions/bats-test@main
     with:
       test-directory: bats-tests/shell
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### `build`

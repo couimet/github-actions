@@ -115,6 +115,7 @@ jobs:
         uses: ./bats-test
         with:
           test-directory: bats-tests/shell
+          github-token: ${{ github.token }}
 
   self-test-checks:
     name: Self-test typescript-ci-checks workflow
