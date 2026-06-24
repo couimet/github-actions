@@ -27,7 +27,7 @@ runs:
       run: bash "${{ github.action_path }}/resolve.sh"
 
     - name: Post sticky PR comment
-      uses: marocchino/sticky-pull-request-comment@33169d5dcc6b00c623618ba2ef9bac99f0d316c9 # v3.0.4
+      uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
       with:
         header: ${{ inputs.header }}
         number: ${{ steps.resolve.outputs.pr_number }}
