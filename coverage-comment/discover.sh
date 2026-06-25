@@ -15,8 +15,16 @@ derive_title() {
 }
 
 has_coverage_data() {
-  # Returns 0 if the file is valid JSON and not null, 1 otherwise.
-  jq -e '. != null' "$1" > /dev/null 2>&1
+  # Returns 0 if the file has meaningful coverage data (not null, not all zeros), 1 otherwise.
+  jq -e '
+    . != null and
+    (
+      .total.lines.total > 0 or
+      .total.statements.total > 0 or
+      .total.functions.total > 0 or
+      .total.branches.total > 0
+    )
+  ' "$1" > /dev/null 2>&1
 }
 
 cd "$working_dir"
