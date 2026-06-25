@@ -23,6 +23,10 @@ on:
         required: false
         type: string
         default: 'pnpm build'
+      pre-install-command:
+        required: false
+        type: string
+        default: ''
       test-command:
         required: false
         type: string
@@ -58,6 +62,8 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
+      - if: inputs.pre-install-command != ''
+        run: ${{ inputs.pre-install-command }}
       - uses: couimet/github-actions/install-deps@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -76,6 +82,8 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
+      - if: inputs.pre-install-command != ''
+        run: ${{ inputs.pre-install-command }}
       - uses: couimet/github-actions/install-deps@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -94,6 +102,8 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
+      - if: inputs.pre-install-command != ''
+        run: ${{ inputs.pre-install-command }}
       - uses: couimet/github-actions/install-deps@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -113,6 +123,8 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
+      - if: inputs.pre-install-command != ''
+        run: ${{ inputs.pre-install-command }}
       - uses: couimet/github-actions/install-deps@main
         with:
           working-directory: ${{ inputs.working-directory }}
