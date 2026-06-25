@@ -18,8 +18,8 @@ if ! command -v gh &>/dev/null; then
 fi
 
 # Enumerate action.yml files. Prune node_modules so a vendored action.yml at
-# depth 2 is never mistaken for a repo action.
-if ! action_files="$(find "$ACTION_ROOT" -maxdepth 2 -path '*/node_modules' -prune -o -name action.yml -print | sort)"; then
+# any depth is never mistaken for a repo action.
+if ! action_files="$(find "$ACTION_ROOT" -path '*/node_modules' -prune -o -name action.yml -print | sort)"; then
   echo "::error::Failed to enumerate action directories"
   exit 1
 fi
@@ -40,6 +40,10 @@ while IFS= read -r action_yml; do
     # the pattern suppresses lines that don't match a pinned SHA.
     ref="$(echo "$line" | sed -n 's/.*uses:[[:space:]]*\([^[:space:]]*@[0-9a-f]\{40\}\).*/\1/p')"
     [[ -z "$ref" ]] && continue
+    # Strip optional surrounding quotes (single or double) that YAML
+    # allows on string values, so the ref stays a clean owner/repo@sha.
+    ref="${ref#\"}"; ref="${ref%\"}"
+    ref="${ref#\'}"; ref="${ref%\'}"
 
     repo="${ref%@*}"
     sha="${ref##*@}"
@@ -52,9 +56,9 @@ while IFS= read -r action_yml; do
     else
       echo "MISSING"
       echo "::error::SHA ${sha} not found in ${repo} (pinned in ${action_yml}). The upstream repo may have force-pushed; update the pin to a current SHA."
-      missing=1
+      missing=$((missing + 1))
     fi
-  done < <(grep -E 'uses:[[:space:]]+[^[:space:]]+@[0-9a-f]{40}' "$action_yml")
+  done < <(grep -E '^[[:space:]]*-[[:space:]]*uses:[[:space:]]+[^[:space:]]+@[0-9a-f]{40}' "$action_yml")
 done <<< "$action_files"
 
 if (( missing )); then

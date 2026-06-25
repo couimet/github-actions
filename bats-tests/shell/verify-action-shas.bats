@@ -47,6 +47,7 @@ run_script() {
 
 SHA1="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 SHA2="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+SHA3="cccccccccccccccccccccccccccccccccccccccc"
 
 # --- tests ---
 
@@ -134,12 +135,87 @@ runs:
     - uses: owner/repo@${SHA1}
 EOF
 
+  mkdir -p "$TEST_TEMP_DIR/no-gh-bin"
   run bash -c "
     cd '$TEST_TEMP_DIR' && \
-    PATH='/usr/bin:/bin' \
+    PATH='$TEST_TEMP_DIR/no-gh-bin:/usr/bin:/bin' \
     ACTION_ROOT='$TEST_TEMP_DIR' \
     bash '$SCRIPT'
   "
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "gh CLI is required"
+}
+
+@test "quoted uses: values are parsed correctly" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+  echo "$SHA2" >> "$TEST_TEMP_DIR/valid-shas.txt"
+
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: "owner/repo@${SHA1}"
+    - uses: 'owner2/repo2@${SHA2}'
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 2 pinned SHA(s) verified"
+}
+
+@test "commented uses: lines are ignored" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@${SHA1}
+    # - uses: owner/repo@${SHA2}
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 1 pinned SHA(s) verified"
+}
+
+@test "multiple missing SHAs reports correct count" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@${SHA1}
+    - uses: owner/repo@${SHA2}
+    - uses: owner/repo@${SHA3}
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "::error::2 pinned SHA(s) are missing"
+}
+
+@test "discovers deeply nested action.yml files" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  mkdir -p "$TEST_TEMP_DIR/a/b/c"
+  cat > "$TEST_TEMP_DIR/a/b/c/action.yml" <<EOF
+name: Deep
+description: Deeply nested action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@${SHA1}
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 1 pinned SHA(s) verified"
 }
