@@ -90,6 +90,8 @@ teardown() {
   git init --bare "$ORIGIN_DIR"
   git clone "$ORIGIN_DIR" "$WORK_DIR"
   cd "$WORK_DIR"
+  git config user.email "test@test.test"
+  git config user.name "Test"
 
   # Base commit: 1 TODO
   echo "TODO: old" > app.ts
@@ -124,6 +126,8 @@ teardown() {
   git init --bare "$ORIGIN_DIR"
   git clone "$ORIGIN_DIR" "$WORK_DIR"
   cd "$WORK_DIR"
+  git config user.email "test@test.test"
+  git config user.name "Test"
 
   # Base commit: 2 TODOs
   echo "TODO: old" > app.ts
