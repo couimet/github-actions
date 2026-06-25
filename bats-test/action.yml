@@ -5,7 +5,7 @@ inputs:
   assert-install:
     description: 'Install the bats-assert helper library.'
     required: false
-    default: 'false'
+    default: 'true'
   bats-version:
     description: 'BATS version installed by bats-core/bats-action. Pinned (not floating on latest) so CI matches the local brew stable.'
     required: false
@@ -25,11 +25,11 @@ inputs:
   recursive:
     description: 'Recurse into subdirectories of test-directory.'
     required: false
-    default: 'false'
+    default: 'true'
   support-install:
     description: 'Install the bats-support helper library.'
     required: false
-    default: 'false'
+    default: 'true'
   test-directory:
     description: 'Directory containing .bats test files.'
     required: false

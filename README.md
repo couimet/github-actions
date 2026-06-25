@@ -12,13 +12,13 @@ Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a direct
 
 | Input             | Required | Default  | Description                                                                          |
 | ----------------- | -------- | -------- | ------------------------------------------------------------------------------------ |
-| `assert-install`  | no       | `false`  | Install the `bats-assert` helper library.                                            |
+| `assert-install`  | no       | `true`   | Install the `bats-assert` helper library.                                            |
 | `bats-version`    | no       | `1.13.0` | BATS version installed; pinned so CI matches the local brew stable.                  |
 | `detik-install`   | no       | `false`  | Install the `detik` helper library.                                                  |
 | `file-install`    | no       | `false`  | Install the `bats-file` helper library.                                              |
 | `formatter`       | no       | (empty)  | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
-| `recursive`       | no       | `false`  | Recurse into subdirectories of `test-directory`.                                     |
-| `support-install` | no       | `false`  | Install the `bats-support` helper library.                                           |
+| `recursive`       | no       | `true`   | Recurse into subdirectories of `test-directory`.                                     |
+| `support-install` | no       | `true`   | Install the `bats-support` helper library.                                           |
 | `test-directory`  | no       | `tests/` | Directory containing `.bats` test files.                                             |
 
 This action has no outputs; success or failure is reported through the step exit code.
