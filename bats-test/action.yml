@@ -75,7 +75,7 @@ runs:
 
     - name: Publish BATS test results
       if: always() && inputs.publish-comment == 'true' && steps.bats-run.outputs.total != '' && github.event_name == 'pull_request'
-      uses: ./publish-pr-comment
+      uses: couimet/github-actions/publish-pr-comment@main
       with:
         github-token: ${{ inputs.github-token }}
         header: ${{ inputs.comment-header }}

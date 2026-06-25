@@ -34,6 +34,29 @@
   <rationale>`@main` is the intended rolling release channel for first-party actions. We control the repo, so breaking changes are intentional and versioned. SHAs add pin-update churn with no benefit for actions we own.</rationale>
 </rule>
 
+<rule id="CI003" priority="critical">
+  <title>Composite actions reference internal actions by full path, not ./</title>
+  <do>In composite action `action.yml` files, reference other `couimet/github-actions/*` actions with the full `couimet/github-actions/<name>@main` path</do>
+  <never>Use `./` relative paths or `${{ github.action_path }}` expressions in `uses:` — `./` resolves to the consumer's workspace, and expressions are forbidden in `uses:` fields</never>
+  <rationale>GitHub Actions resolves `./` paths in composite actions relative to the consuming repository's workspace. The `${{ github.action_path }}` expression would point to the action's own repo, but GitHub Actions forbids expressions in `uses:` fields entirely. The only portable option is the full `owner/repo/path@main` reference.</rationale>
+  <good-example>
+    ```yaml
+    uses: couimet/github-actions/publish-pr-comment@main
+    ```
+  </good-example>
+  <bad-example>
+    ```yaml
+    uses: ./publish-pr-comment
+    ```
+  </bad-example>
+  <bad-example>
+    ```yaml
+    # Also invalid: expressions are forbidden in uses:
+    uses: ${{ github.action_path }}/publish-pr-comment
+    ```
+  </bad-example>
+</rule>
+
 <rule id="Q001" priority="critical">
   <title>Questions go to file via /question when there is ambiguity</title>
   <do>Use the `/question` skill as soon as there is ambiguity that needs clearing — choices between approaches, unclear requirements, design decisions that could go multiple ways</do>
