@@ -28,6 +28,13 @@ RECURSIVE="${RECURSIVE:-false}"
 PUBLISH_COMMENT="${PUBLISH_COMMENT:-false}"
 GITHUB_OUTPUT="${GITHUB_OUTPUT:-/dev/null}"
 RUNNER_TEMP="${RUNNER_TEMP:-/tmp}"
+GH_TOKEN="${GH_TOKEN:-}"
+
+# Validate: publish requires a token
+if [[ "$PUBLISH_COMMENT" == "true" && -z "$GH_TOKEN" ]]; then
+  echo "::error::publish-comment is 'true' but github-token is empty. Pass secrets.GITHUB_TOKEN as the github-token input."
+  exit 1
+fi
 
 # Build bats arguments shared by both paths
 args=()
