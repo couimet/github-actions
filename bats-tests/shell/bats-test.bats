@@ -18,6 +18,9 @@ setup() {
   # Default to non-publish so CI's PUBLISH_COMMENT=true env leak doesn't
   # break the non-publish-path tests. Publish-path tests override explicitly.
   export PUBLISH_COMMENT=false
+  # Default token so existing publish-path tests pass. Tests that need
+  # to verify the "no token" error override it with GH_TOKEN="".
+  export GH_TOKEN="fake-test-token"
 }
 
 teardown() {
@@ -227,4 +230,40 @@ EOF
 
   run bash "$SCRIPT"
   grep -q 'exit_code=0' "$GITHUB_OUTPUT"
+}
+
+# --- Token validation --------------------------------------------------------
+
+@test "token validation: fails when publish-comment is true and GH_TOKEN is empty" {
+  export PUBLISH_COMMENT=true
+  export GH_TOKEN=""
+  cat > "$TEST_DIR/passing.bats" << 'EOF'
+@test "passing test" { true; }
+EOF
+
+  run bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  [[ "$output" =~ "publish-comment is 'true' but github-token is empty" ]]
+}
+
+@test "token validation: succeeds when publish-comment is true and GH_TOKEN is set" {
+  export PUBLISH_COMMENT=true
+  export GH_TOKEN="ghp_fake-token-for-testing"
+  cat > "$TEST_DIR/passing.bats" << 'EOF'
+@test "passing test" { true; }
+EOF
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
+@test "token validation: no-op when publish-comment is false and GH_TOKEN is empty" {
+  export PUBLISH_COMMENT=false
+  export GH_TOKEN=""
+  cat > "$TEST_DIR/passing.bats" << 'EOF'
+@test "passing test" { true; }
+EOF
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
 }
