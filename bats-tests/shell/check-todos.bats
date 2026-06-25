@@ -97,6 +97,8 @@ teardown() {
   # Base commit: 1 TODO
   echo "TODO: old" > app.ts
   git add app.ts
+  git config user.email "test@example.com"
+  git config user.name "Test"
   git commit -m "initial"
   git branch -m main
   git push origin main
@@ -136,6 +138,8 @@ teardown() {
   echo "TODO: old" > app.ts
   echo "FIXME: also old" > lib.ts
   git add app.ts lib.ts
+  git config user.email "test@example.com"
+  git config user.name "Test"
   git commit -m "initial"
   git branch -m main
   git push origin main
