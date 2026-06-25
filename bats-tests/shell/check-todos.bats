@@ -90,7 +90,7 @@ teardown() {
   git init --bare "$ORIGIN_DIR"
   git clone "$ORIGIN_DIR" "$WORK_DIR"
   cd "$WORK_DIR"
-  git config user.email "test@test.test"
+  git config user.email "test@example.com"
   git config user.name "Test"
   git config init.defaultBranch main
 
@@ -128,7 +128,7 @@ teardown() {
   git init --bare "$ORIGIN_DIR"
   git clone "$ORIGIN_DIR" "$WORK_DIR"
   cd "$WORK_DIR"
-  git config user.email "test@test.test"
+  git config user.email "test@example.com"
   git config user.name "Test"
   git config init.defaultBranch main
 

@@ -34,6 +34,18 @@ inputs:
     description: 'Directory containing .bats test files.'
     required: false
     default: 'bats-tests/'
+  publish-comment:
+    description: 'Post a sticky PR comment with test result counts via publish-pr-comment.'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'GitHub token for posting the comment. Pass secrets.GITHUB_TOKEN from the consuming workflow. Required only when publish-comment is true.'
+    required: false
+    default: ''
+  comment-header:
+    description: 'Unique header that identifies the BATS comment across re-runs (sticky update behavior).'
+    required: false
+    default: 'BATS Test Results'
 
 runs:
   using: composite
@@ -52,14 +64,19 @@ runs:
         detik-install: ${{ inputs.detik-install }}
 
     - name: Run BATS
+      id: bats-run
       shell: bash
       env:
         TEST_DIRECTORY: ${{ inputs.test-directory }}
         FORMATTER: ${{ inputs.formatter }}
         RECURSIVE: ${{ inputs.recursive }}
-      run: |
-        set -euo pipefail
-        args=()
-        if [[ "$RECURSIVE" == "true" ]]; then args+=(--recursive); fi
-        if [[ -n "$FORMATTER" ]]; then args+=(--formatter "$FORMATTER"); fi
-        bats ${args[@]+"${args[@]}"} "$TEST_DIRECTORY"
+        PUBLISH_COMMENT: ${{ inputs.publish-comment }}
+      run: bash "${{ github.action_path }}/run.sh"
+
+    - name: Publish BATS test results
+      if: always() && inputs.publish-comment == 'true' && steps.bats-run.outputs.total != '' && github.event_name == 'pull_request'
+      uses: ./publish-pr-comment
+      with:
+        github-token: ${{ inputs.github-token }}
+        header: ${{ inputs.comment-header }}
+        comment-file: ${{ runner.temp }}/bats-comment.md
