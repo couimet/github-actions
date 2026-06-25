@@ -57,10 +57,12 @@ if [[ "$PUBLISH_COMMENT" == "true" ]]; then
     passed="?"
     failed="?"
   fi
-  echo "total=${total}" >> "$GITHUB_OUTPUT"
-  echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
-  echo "passed=${passed}" >> "$GITHUB_OUTPUT"
-  echo "failed=${failed}" >> "$GITHUB_OUTPUT"
+  {
+    echo "total=${total}"
+    echo "exit_code=${exit_code}"
+    echo "passed=${passed}"
+    echo "failed=${failed}"
+  } >> "$GITHUB_OUTPUT"
 
   if [[ "$exit_code" -eq 0 ]]; then
     result_emoji="✅ Passed"
