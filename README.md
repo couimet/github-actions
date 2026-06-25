@@ -10,16 +10,16 @@ Listed alphabetically.
 
 Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a directory of `.bats` files. The step fails when any test fails.
 
-| Input             | Required | Default  | Description                                                                          |
-| ----------------- | -------- | -------- | ------------------------------------------------------------------------------------ |
-| `assert-install`  | no       | `true`   | Install the `bats-assert` helper library.                                            |
-| `bats-version`    | no       | `1.13.0` | BATS version installed; pinned so CI matches the local brew stable.                  |
-| `detik-install`   | no       | `false`  | Install the `detik` helper library.                                                  |
-| `file-install`    | no       | `false`  | Install the `bats-file` helper library.                                              |
-| `formatter`       | no       | (empty)  | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
-| `recursive`       | no       | `true`   | Recurse into subdirectories of `test-directory`.                                     |
-| `support-install` | no       | `true`   | Install the `bats-support` helper library.                                           |
-| `test-directory`  | no       | `tests/` | Directory containing `.bats` test files.                                             |
+| Input             | Required | Default       | Description                                                                          |
+| ----------------- | -------- | ------------- | ------------------------------------------------------------------------------------ |
+| `assert-install`  | no       | `true`        | Install the `bats-assert` helper library.                                            |
+| `bats-version`    | no       | `1.13.0`      | BATS version installed; pinned so CI matches the local brew stable.                  |
+| `detik-install`   | no       | `false`       | Install the `detik` helper library.                                                  |
+| `file-install`    | no       | `false`       | Install the `bats-file` helper library.                                              |
+| `formatter`       | no       | (empty)       | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output. |
+| `recursive`       | no       | `true`        | Recurse into subdirectories of `test-directory`.                                     |
+| `support-install` | no       | `true`        | Install the `bats-support` helper library.                                           |
+| `test-directory`  | no       | `bats-tests/` | Directory containing `.bats` test files.                                             |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -30,7 +30,7 @@ steps:
       persist-credentials: false
   - uses: couimet/github-actions/bats-test@main
     with:
-      test-directory: tests/shell
+      test-directory: bats-tests/shell
 ```
 
 ### `build`

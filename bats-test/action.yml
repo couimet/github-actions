@@ -33,7 +33,7 @@ inputs:
   test-directory:
     description: 'Directory containing .bats test files.'
     required: false
-    default: 'tests/'
+    default: 'bats-tests/'
 
 runs:
   using: composite

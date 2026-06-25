@@ -90,11 +90,15 @@ teardown() {
   git init --bare "$ORIGIN_DIR"
   git clone "$ORIGIN_DIR" "$WORK_DIR"
   cd "$WORK_DIR"
+  git config user.email "test@test.test"
+  git config user.name "Test"
+  git config init.defaultBranch main
 
   # Base commit: 1 TODO
   echo "TODO: old" > app.ts
   git add app.ts
   git commit -m "initial"
+  git branch -m main
   git push origin main
 
   # Current state: add another TODO
@@ -124,12 +128,16 @@ teardown() {
   git init --bare "$ORIGIN_DIR"
   git clone "$ORIGIN_DIR" "$WORK_DIR"
   cd "$WORK_DIR"
+  git config user.email "test@test.test"
+  git config user.name "Test"
+  git config init.defaultBranch main
 
   # Base commit: 2 TODOs
   echo "TODO: old" > app.ts
   echo "FIXME: also old" > lib.ts
   git add app.ts lib.ts
   git commit -m "initial"
+  git branch -m main
   git push origin main
 
   # Current state: remove lib.ts (only 1 TODO remains)

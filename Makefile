@@ -35,4 +35,4 @@ lint-sh:
 	find . -type f \( -name '*.sh' -o -name '*.bash' \) -not -path '*/.claude-work/*' -not -path '*/.history/*' -not -path '*/node_modules/*' -exec shellcheck {} +
 
 test: install-prereqs
-	bats tests/shell/
+	bats bats-tests/shell/
