@@ -1,0 +1,167 @@
+name: TypeScript CI Checks
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: false
+        type: string
+        default: '.'
+      node-version:
+        required: false
+        type: string
+        default: ''
+      format-command:
+        required: false
+        type: string
+        default: 'pnpm format'
+      lint-command:
+        required: false
+        type: string
+        default: 'pnpm lint'
+      build-command:
+        required: false
+        type: string
+        default: 'pnpm build'
+      test-command:
+        required: false
+        type: string
+        default: 'pnpm test'
+      guard-versions:
+        required: false
+        type: boolean
+        default: true
+      check-no-prerelease-deps:
+        required: false
+        type: boolean
+        default: true
+      check-todos:
+        required: false
+        type: boolean
+        default: true
+      coverage-comment:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - &checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: couimet/github-actions/setup-node-pnpm@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+      - uses: couimet/github-actions/install-deps@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: couimet/github-actions/format@main
+        with:
+          command: ${{ inputs.format-command }}
+          working-directory: ${{ inputs.working-directory }}
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - *checkout
+      - uses: couimet/github-actions/setup-node-pnpm@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+      - uses: couimet/github-actions/install-deps@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: couimet/github-actions/lint@main
+        with:
+          command: ${{ inputs.lint-command }}
+          working-directory: ${{ inputs.working-directory }}
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - *checkout
+      - uses: couimet/github-actions/setup-node-pnpm@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+      - uses: couimet/github-actions/install-deps@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: couimet/github-actions/build@main
+        with:
+          command: ${{ inputs.build-command }}
+          working-directory: ${{ inputs.working-directory }}
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - *checkout
+      - uses: couimet/github-actions/setup-node-pnpm@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+      - uses: couimet/github-actions/install-deps@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: couimet/github-actions/test@main
+        with:
+          command: ${{ inputs.test-command }}
+          working-directory: ${{ inputs.working-directory }}
+      - if: inputs.coverage-comment && github.event_name == 'pull_request'
+        uses: couimet/github-actions/coverage-comment@main
+        with:
+          github-token: ${{ github.token }}
+          working-directory: ${{ inputs.working-directory }}
+
+  guard-versions:
+    if: inputs.guard-versions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - &checkout-depth-0
+        <<: *checkout
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: couimet/github-actions/guard-versions@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+  check-no-prerelease-deps:
+    if: inputs.check-no-prerelease-deps
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - *checkout
+      - uses: couimet/github-actions/check-no-prerelease-deps@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+  check-todos:
+    if: inputs.check-todos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - *checkout-depth-0
+      - uses: couimet/github-actions/check-todos@main
+        with:
+          path: ${{ inputs.working-directory }}
+          base-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+          github-token: ${{ github.token }}
