@@ -401,7 +401,7 @@ jobs:
 
 Each job runs in parallel and appears as a separate check:
 
-```
+```text
 CI / format
 CI / lint
 CI / build
