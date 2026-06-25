@@ -136,9 +136,12 @@ runs:
 EOF
 
   mkdir -p "$TEST_TEMP_DIR/no-gh-bin"
+  for cmd in bash dirname find sort sed grep; do
+    ln -s "$(command -v "$cmd")" "$TEST_TEMP_DIR/no-gh-bin/$cmd"
+  done
   run bash -c "
     cd '$TEST_TEMP_DIR' && \
-    PATH='$TEST_TEMP_DIR/no-gh-bin:/usr/bin:/bin' \
+    PATH='$TEST_TEMP_DIR/no-gh-bin' \
     ACTION_ROOT='$TEST_TEMP_DIR' \
     bash '$SCRIPT'
   "
