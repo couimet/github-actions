@@ -115,7 +115,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    uses: ./.github/workflows/typescript-ci-checks.yml
+    uses: ./typescript-ci-checks/workflow.yml
     with:
       working-directory: tests
       guard-versions: false

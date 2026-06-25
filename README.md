@@ -394,14 +394,14 @@ Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as s
 ```yaml
 jobs:
   ci:
-    uses: couimet/github-actions/.github/workflows/typescript-ci-checks.yml@main
+    uses: couimet/github-actions/typescript-ci-checks/workflow.yml@main
     with:
       working-directory: .
 ```
 
 Each job runs in parallel and appears as a separate check:
 
-```
+```text
 CI / format
 CI / lint
 CI / build
