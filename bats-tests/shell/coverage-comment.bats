@@ -66,6 +66,44 @@ run_discover() {
   grep -q "multiple_files=$" "$GITHUB_OUTPUT" || grep -q "multiple_files=" "$GITHUB_OUTPUT"
 }
 
+@test "single path: null content emits warning and empty output" {
+  mkdir -p "$TEST_TEMP_DIR/packages/foo/coverage"
+  echo 'null' > "$TEST_TEMP_DIR/packages/foo/coverage/coverage-summary.json"
+  export WORKING_DIRECTORY="$TEST_TEMP_DIR"
+  export COVERAGE_SUMMARY_PATH="packages/foo/coverage/coverage-summary.json"
+  run_discover
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "null or invalid"
+  grep -q "multiple_files=$" "$GITHUB_OUTPUT" || grep -q "multiple_files=" "$GITHUB_OUTPUT"
+}
+
+@test "auto-discovery: skips null files, keeps valid ones" {
+  mkdir -p "$TEST_TEMP_DIR/packages/valid/coverage"
+  echo '{}' > "$TEST_TEMP_DIR/packages/valid/coverage/coverage-summary.json"
+  mkdir -p "$TEST_TEMP_DIR/packages/nullpkg/coverage"
+  echo 'null' > "$TEST_TEMP_DIR/packages/nullpkg/coverage/coverage-summary.json"
+  export WORKING_DIRECTORY="$TEST_TEMP_DIR"
+  export COVERAGE_SUMMARY_PATH=""
+  run_discover
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "null or invalid"
+  grep -q "valid, ./packages/valid/coverage/coverage-summary.json" "$GITHUB_OUTPUT"
+  ! grep -q "nullpkg" "$GITHUB_OUTPUT"
+}
+
+@test "auto-discovery: all files null emits warning and empty output" {
+  mkdir -p "$TEST_TEMP_DIR/packages/nulla/coverage"
+  echo 'null' > "$TEST_TEMP_DIR/packages/nulla/coverage/coverage-summary.json"
+  mkdir -p "$TEST_TEMP_DIR/packages/nullb/coverage"
+  echo 'null' > "$TEST_TEMP_DIR/packages/nullb/coverage/coverage-summary.json"
+  export WORKING_DIRECTORY="$TEST_TEMP_DIR"
+  export COVERAGE_SUMMARY_PATH=""
+  run_discover
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "No coverage-summary.json files with valid data found"
+  grep -q "multiple_files=$" "$GITHUB_OUTPUT" || grep -q "multiple_files=" "$GITHUB_OUTPUT"
+}
+
 @test "working directory defaults to '.' when WORKING_DIRECTORY is unset" {
   mkdir -p "$TEST_TEMP_DIR/coverage"
   echo '{}' > "$TEST_TEMP_DIR/coverage/coverage-summary.json"

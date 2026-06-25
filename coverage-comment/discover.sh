@@ -14,9 +14,19 @@ derive_title() {
   printf '%s' "$t"
 }
 
+has_coverage_data() {
+  # Returns 0 if the file is valid JSON and not null, 1 otherwise.
+  jq -e '. != null' "$1" > /dev/null 2>&1
+}
+
 cd "$working_dir"
 
 if [[ -n "$coverage_summary_path" ]]; then
+  if ! has_coverage_data "$coverage_summary_path"; then
+    echo "::warning::Coverage summary at ${coverage_summary_path} is null or invalid — skipping comment"
+    echo "multiple_files=" >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
   # Single path override: extract title from the directory two levels up.
   # ./packages/foo/coverage/coverage-summary.json -> foo
   title="$(derive_title "$coverage_summary_path")"
@@ -37,11 +47,21 @@ fi
 multiple_files=""
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
+  if ! has_coverage_data "$file"; then
+    echo "::warning::Skipping ${file}: coverage data is null or invalid"
+    continue
+  fi
   # Extract title from the directory two levels up from the coverage file.
   # ./packages/rangelink-core-ts/coverage/coverage-summary.json -> rangelink-core-ts
   title="$(derive_title "$file")"
   multiple_files+="${title}, ${file}"$'\n'
 done <<< "$maps"
+
+if [[ -z "$multiple_files" ]]; then
+  echo "::warning::No coverage-summary.json files with valid data found under ${working_dir}"
+  echo "multiple_files=" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
 
 # Trim trailing newline
 multiple_files="${multiple_files%$'\n'}"
