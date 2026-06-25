@@ -98,6 +98,7 @@ teardown() {
   echo "TODO: old" > app.ts
   git add app.ts
   git commit -m "initial"
+  git branch -m main
   git push origin main
 
   # Current state: add another TODO
@@ -136,6 +137,7 @@ teardown() {
   echo "FIXME: also old" > lib.ts
   git add app.ts lib.ts
   git commit -m "initial"
+  git branch -m main
   git push origin main
 
   # Current state: remove lib.ts (only 1 TODO remains)
