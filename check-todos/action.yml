@@ -1,0 +1,52 @@
+name: 'Check TODOs/FIXMEs'
+description: 'Count TODOs and FIXMEs in the codebase. On PRs, computes the delta vs the base branch to surface whether technical debt is being addressed or accumulated.'
+
+inputs:
+  base-ref:
+    description: 'Base ref for PR delta comparison. When empty, reports the current count only.'
+    required: false
+    default: ''
+  file-extensions:
+    description: 'Comma-separated file extensions to scan (without leading dot).'
+    required: false
+    default: 'ts,tsx,js,jsx,mjs,cjs,py,rb,go,rs,java,cs,sh,bash,yaml,yml,toml,md,html,css,scss,sql,tf,graphql,vue,svelte'
+  github-token:
+    description: 'GitHub token for posting PR comments. Pass secrets.GITHUB_TOKEN from the consuming workflow.'
+    required: false
+    default: ''
+  header:
+    description: 'Unique header that identifies the PR comment across re-runs (enables sticky update behavior).'
+    required: false
+    default: 'TODO/FIXME Report'
+  path:
+    description: 'Directory to scan for TODOs and FIXMEs.'
+    required: false
+    default: '.'
+
+outputs:
+  todo-count:
+    description: 'Current TODO/FIXME count'
+    value: ${{ steps.check.outputs.todo-count }}
+  todo-delta:
+    description: 'Change in TODO/FIXME count vs base ref (PRs only, empty otherwise)'
+    value: ${{ steps.check.outputs.todo-delta }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check TODOs/FIXMEs
+      id: check
+      shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref }}
+        FILE_EXTENSIONS: ${{ inputs.file-extensions }}
+        SCAN_PATH: ${{ inputs.path }}
+      run: bash "${{ github.action_path }}/check.sh"
+
+    - name: Post PR comment
+      if: inputs.base-ref != '' && inputs.github-token != ''
+      uses: couimet/github-actions/publish-pr-comment@main
+      with:
+        comment-file: ${{ steps.check.outputs.comment-file }}
+        github-token: ${{ inputs.github-token }}
+        header: ${{ inputs.header }}

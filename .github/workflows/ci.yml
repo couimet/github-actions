@@ -97,6 +97,12 @@ jobs:
           header: publish-pr-comment-self-test
           comment-file: tests/fixtures/comment-body.md
 
+      - name: Test check-todos action
+        uses: ./check-todos
+        with:
+          path: tests
+          github-token: ${{ github.token }}
+
       - name: Test coverage-comment action
         if: github.event_name == 'pull_request'
         uses: ./coverage-comment

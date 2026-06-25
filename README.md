@@ -72,6 +72,41 @@ steps:
   - uses: couimet/github-actions/check-no-prerelease-deps@main
 ```
 
+### `check-todos`
+
+Counts `TODO` and `FIXME` comments across a configurable set of file extensions. On PRs, fetches the base ref and computes the delta to surface whether technical debt is being addressed or accumulated. The step never fails; it reports the count and delta as outputs and writes a markdown summary.
+
+| Input             | Required | Default                                                                                                      | Description                                                                   |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `base-ref`        | no       | (empty)                                                                                                      | Base ref for PR delta comparison. When empty, reports the current count only. |
+| `file-extensions` | no       | `ts,tsx,js,jsx,mjs,cjs,py,rb,go,rs,java,cs,sh,bash,yaml,yml,toml,md,html,css,scss,sql,tf,graphql,vue,svelte` | Comma-separated file extensions to scan (without leading dot).                |
+| `path`            | no       | `.`                                                                                                          | Directory to scan for TODOs and FIXMEs.                                       |
+
+| Output       | Description                                                      |
+| ------------ | ---------------------------------------------------------------- |
+| `todo-count` | Current `TODO`/`FIXME` count.                                    |
+| `todo-delta` | Change vs base ref (PRs only, empty when `base-ref` is not set). |
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+      fetch-depth: 0
+  - uses: couimet/github-actions/check-todos@main
+```
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+      fetch-depth: 0
+  - uses: couimet/github-actions/check-todos@main
+    with:
+      base-ref: ${{ github.event.pull_request.base.sha }}
+```
+
 ### `coverage-comment`
 
 Posts a PR comment with Jest coverage summaries and optional JUnit test stats. Wraps [MishaKav/jest-coverage-comment](https://github.com/MishaKav/jest-coverage-comment) with monorepo auto-discovery: when `coverage-summary-path` is not set, the action discovers all `coverage-summary.json` files under `working-directory` (excluding `node_modules`) and maps each to a per-package section in the comment. On subsequent pushes, the same comment is updated rather than creating duplicates.
@@ -321,7 +356,7 @@ steps:
 
 ### `typescript-ci`
 
-One-step CI for TypeScript projects. Bundles `setup-node-pnpm`, `install-deps`, `format`, `lint`, `build`, `test`, `coverage-comment`, `check-no-prerelease-deps`, and `guard-versions` into a single composite action. Use this for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
+One-step CI for TypeScript projects. Bundles frequently-used CI steps into a single composite action. The input table below lists every bundled step and its toggle input. Use `typescript-ci` for the common case; use the individual actions when you need fine-grained control over step ordering, caching, or per-step timing.
 
 The `coverage-comment` step posts a PR comment with Jest coverage summaries and optional test stats. It only runs on `pull_request` events. The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
@@ -329,6 +364,7 @@ The `coverage-comment` step posts a PR comment with Jest coverage summaries and 
 | -------------------------- | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
 | `build-command`            | no       | `pnpm build`     | Command to run for building.                                                                               |
 | `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.                                     |
+| `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                           |
 | `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job. |
 | `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                                             |
 | `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                      |
