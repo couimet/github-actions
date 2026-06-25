@@ -114,7 +114,7 @@ jobs:
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
-          test-directory: tests/shell
+          test-directory: bats-tests/shell
 
   self-test-checks:
     name: Self-test typescript-ci-checks workflow
