@@ -92,6 +92,7 @@ teardown() {
   cd "$WORK_DIR"
   git config user.email "test@test.test"
   git config user.name "Test"
+  git config init.defaultBranch main
 
   # Base commit: 1 TODO
   echo "TODO: old" > app.ts
@@ -128,6 +129,7 @@ teardown() {
   cd "$WORK_DIR"
   git config user.email "test@test.test"
   git config user.name "Test"
+  git config init.defaultBranch main
 
   # Base commit: 2 TODOs
   echo "TODO: old" > app.ts
