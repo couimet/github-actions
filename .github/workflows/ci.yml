@@ -115,3 +115,13 @@ jobs:
         uses: ./bats-test
         with:
           test-directory: tests/shell
+
+  self-test-checks:
+    name: Self-test typescript-ci-checks workflow
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/typescript-ci-checks.yml
+    with:
+      working-directory: tests
+      guard-versions: false
