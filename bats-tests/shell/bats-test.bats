@@ -15,6 +15,9 @@ setup() {
   export GITHUB_OUTPUT
   GITHUB_OUTPUT="$(mktemp)"
   export RUNNER_TEMP="$TEST_TEMP_DIR"
+  # Default to non-publish so CI's PUBLISH_COMMENT=true env leak doesn't
+  # break the non-publish-path tests. Publish-path tests override explicitly.
+  export PUBLISH_COMMENT=false
 }
 
 teardown() {
