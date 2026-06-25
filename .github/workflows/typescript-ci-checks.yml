@@ -50,7 +50,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - &checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
       - uses: couimet/github-actions/setup-node-pnpm@main
@@ -70,9 +71,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - *checkout
       - uses: couimet/github-actions/setup-node-pnpm@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -90,9 +89,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - *checkout
       - uses: couimet/github-actions/setup-node-pnpm@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -111,9 +108,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - *checkout
       - uses: couimet/github-actions/setup-node-pnpm@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -137,7 +132,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - &checkout-depth-0
+        <<: *checkout
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -151,9 +147,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - *checkout
       - uses: couimet/github-actions/check-no-prerelease-deps@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -165,10 +159,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          fetch-depth: 0
+      - *checkout-depth-0
       - uses: couimet/github-actions/check-todos@main
         with:
           path: ${{ inputs.working-directory }}
