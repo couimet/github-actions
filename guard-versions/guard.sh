@@ -9,6 +9,18 @@ if [[ -z "$base_ref" || -z "$head_ref" ]]; then
   exit 2
 fi
 
+# Fetch refs not already available locally (shallow clones, forked PRs).
+# Default actions/checkout on pull_request events only fetches the merge commit.
+git cat-file -e "$base_ref" 2>/dev/null || git fetch --no-tags --depth=100 origin "$base_ref" 2>/dev/null || true
+if ! git cat-file -e "$head_ref" 2>/dev/null; then
+  git fetch --no-tags --depth=100 origin "$head_ref" 2>/dev/null || true
+  # Forked PRs: the head SHA belongs to the fork and may not be fetchable from origin.
+  # Fall back to HEAD^2 (second parent of the PR merge commit), which checkout always has.
+  if ! git cat-file -e "$head_ref" 2>/dev/null; then
+    head_ref="HEAD^2"
+  fi
+fi
+
 if ! changed_files=$(git diff --name-only "${base_ref}...${head_ref}" 2>/dev/null); then
   echo "::error::git diff failed — cannot resolve refs '${base_ref}...${head_ref}'"
   exit 2
