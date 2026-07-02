@@ -125,7 +125,7 @@ jobs:
     uses: ./.github/workflows/typescript-ci-checks.yml
     with:
       working-directory: tests
-      guard-versions: false
+      guard-versions: true
 
   self-test-ci-checks:
     name: Self-test ci-checks workflow
