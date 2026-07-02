@@ -45,3 +45,24 @@ teardown() {
   run bash "$SCRIPT"
   [ "$status" -eq 1 ]
 }
+
+HEADER_SCRIPT="$PROJECT_ROOT/publish-pr-comment/header.sh"
+
+# T5 — create-new='false' leaves header unchanged
+@test "create-new=false leaves header unchanged" {
+  export CREATE_NEW="false"
+  export HEADER="my-header"
+  run bash "$HEADER_SCRIPT"
+  [ "$status" -eq 0 ]
+  grep -q "header=my-header" "$GITHUB_OUTPUT"
+}
+
+# T6 — create-new='true' appends -${GITHUB_RUN_ID} suffix
+@test "create-new=true appends run ID suffix" {
+  export CREATE_NEW="true"
+  export HEADER="my-header"
+  export GITHUB_RUN_ID="12345"
+  run bash "$HEADER_SCRIPT"
+  [ "$status" -eq 0 ]
+  grep -q "header=my-header-12345" "$GITHUB_OUTPUT"
+}
