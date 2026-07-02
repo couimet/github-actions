@@ -280,12 +280,13 @@ Posts a sticky PR comment. Thin wrapper around [marocchino/sticky-pull-request-c
 
 The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
-| Input          | Required | Default | Description                                                                                    |
-| -------------- | -------- | ------- | ---------------------------------------------------------------------------------------------- |
-| `comment-file` | yes      | (none)  | Path to a markdown file containing the comment body.                                           |
-| `github-token` | yes      | (none)  | GitHub token for posting the comment. Pass `secrets.GITHUB_TOKEN` from the consuming workflow. |
-| `header`       | yes      | (none)  | Unique header that identifies the comment across re-runs (enables sticky update behavior).     |
-| `pr-number`    | no       | (empty) | PR number. When empty, defaults to `github.event.pull_request.number`.                         |
+| Input          | Required | Default   | Description                                                                                                           |
+| -------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
+| `comment-file` | yes      | (none)    | Path to a markdown file containing the comment body.                                                                  |
+| `github-token` | yes      | (none)    | GitHub token for posting the comment. Pass `secrets.GITHUB_TOKEN` from the consuming workflow.                        |
+| `header`       | yes      | (none)    | Unique header that identifies the comment across re-runs (enables sticky update behavior).                            |
+| `pr-number`    | no       | (empty)   | PR number. When empty, defaults to `github.event.pull_request.number`.                                                |
+| `create-new`   | no       | `'false'` | When true, append a unique suffix to the header so each run creates a new comment instead of updating a previous one. |
 
 This action has no outputs; success or failure is reported through the step exit code.
 

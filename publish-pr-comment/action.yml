@@ -15,6 +15,10 @@ inputs:
     description: 'PR number. When empty, defaults to github.event.pull_request.number.'
     required: false
     default: ''
+  create-new:
+    description: 'When true, append a unique suffix to the header so each run creates a new comment instead of updating a previous one.'
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -26,10 +30,19 @@ runs:
         PR_NUMBER: ${{ inputs.pr-number || github.event.pull_request.number }}
       run: bash "${{ github.action_path }}/resolve.sh"
 
+    - name: Compute comment header
+      id: header
+      shell: bash
+      env:
+        CREATE_NEW: ${{ inputs.create-new }}
+        HEADER: ${{ inputs.header }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+      run: bash "${{ github.action_path }}/header.sh"
+
     - name: Post sticky PR comment
       uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
       with:
-        header: ${{ inputs.header }}
+        header: ${{ steps.header.outputs.header }}
         number: ${{ steps.resolve.outputs.pr_number }}
         path: ${{ inputs.comment-file }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
