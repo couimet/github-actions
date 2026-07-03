@@ -28,7 +28,7 @@ setup_merge_repo() {
   echo '{"version": "2.0.0"}' > package.json
   git add package.json
   git commit --quiet -m "feature bump"
-  git checkout --quiet main
+  git checkout --quiet -
   git merge --quiet --no-ff feature -m "merge feature"
 }
 
