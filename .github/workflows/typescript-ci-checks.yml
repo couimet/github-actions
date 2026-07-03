@@ -139,7 +139,7 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
 
   guard-versions:
-    if: inputs.guard-versions
+    if: inputs.guard-versions && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read

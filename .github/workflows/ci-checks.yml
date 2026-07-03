@@ -16,25 +16,20 @@ on:
         type: string
         default: ''
       format:
-        required: false
+        required: true
         type: string
-        default: ''
       lint:
-        required: false
+        required: true
         type: string
-        default: ''
       build:
-        required: false
+        required: true
         type: string
-        default: ''
       test:
-        required: false
+        required: true
         type: string
-        default: ''
 
 jobs:
   format:
-    if: inputs.format != ''
     runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: read
@@ -49,7 +44,6 @@ jobs:
         run: ${{ inputs.format }}
 
   lint:
-    if: inputs.lint != ''
     runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: read
@@ -64,7 +58,6 @@ jobs:
         run: ${{ inputs.lint }}
 
   build:
-    if: inputs.build != ''
     runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: read
@@ -79,7 +72,6 @@ jobs:
         run: ${{ inputs.build }}
 
   test:
-    if: inputs.test != ''
     runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: read

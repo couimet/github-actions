@@ -125,7 +125,7 @@ jobs:
     uses: ./.github/workflows/typescript-ci-checks.yml
     with:
       working-directory: tests
-      guard-versions: false
+      guard-versions: true
 
   self-test-ci-checks:
     name: Self-test ci-checks workflow
@@ -136,3 +136,5 @@ jobs:
       setup: 'echo "toolchain ready"'
       format: 'echo "format passed"'
       lint: 'echo "lint passed"'
+      build: 'echo "build passed"'
+      test: 'echo "test passed"'
