@@ -27,10 +27,15 @@ on:
       test:
         required: true
         type: string
+    secrets:
+      github-token:
+        required: false
 
 jobs:
   format:
     runs-on: ${{ inputs.runs-on }}
+    secrets:
+      github-token:
     permissions:
       contents: read
     steps:
@@ -41,10 +46,14 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.format }}
 
   lint:
     runs-on: ${{ inputs.runs-on }}
+    secrets:
+      github-token:
     permissions:
       contents: read
     steps:
@@ -55,10 +64,14 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.lint }}
 
   build:
     runs-on: ${{ inputs.runs-on }}
+    secrets:
+      github-token:
     permissions:
       contents: read
     steps:
@@ -69,10 +82,14 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.build }}
 
   test:
     runs-on: ${{ inputs.runs-on }}
+    secrets:
+      github-token:
     permissions:
       contents: read
     steps:
@@ -83,4 +100,6 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.test }}
