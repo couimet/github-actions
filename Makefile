@@ -9,6 +9,7 @@ check-actions:
 	bash scripts/verify-version-pins.sh
 	bash scripts/verify-action-shas.sh
 	bash scripts/verify-no-relative-uses.sh
+	bash scripts/verify-ci-checks-secrets.sh
 
 fmt-check:
 	npx --yes prettier@$(PRETTIER_VERSION) --check .

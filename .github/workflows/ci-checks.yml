@@ -27,6 +27,9 @@ on:
       test:
         required: true
         type: string
+    secrets:
+      github-token:
+        required: false
 
 jobs:
   format:
@@ -41,6 +44,8 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.format }}
 
   lint:
@@ -55,6 +60,8 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.lint }}
 
   build:
@@ -69,6 +76,8 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.build }}
 
   test:
@@ -83,4 +92,6 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.setup }}
       - working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: ${{ inputs.test }}
