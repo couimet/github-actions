@@ -1,0 +1,44 @@
+name: 'Check generated drift'
+description: 'Run a command that regenerates files and fail if git detects any drift. Posts a PR comment listing the files that are out of sync.'
+
+inputs:
+  command:
+    description: 'Shell command that regenerates generated files (e.g. `pnpm api:types`, `make generate`).'
+    required: true
+  working-directory:
+    description: 'Directory to run the command in.'
+    required: false
+    default: '.'
+  github-token:
+    description: 'GitHub token for posting PR comments. Pass secrets.GITHUB_TOKEN from the consuming workflow.'
+    required: true
+  header:
+    description: 'Unique header that identifies the PR comment across re-runs (enables sticky update behavior).'
+    required: false
+    default: 'Generated drift check'
+
+runs:
+  using: composite
+  steps:
+    - name: Check generated drift
+      id: check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        COMMAND: ${{ inputs.command }}
+      run: bash "${{ github.action_path }}/check.sh"
+
+    - name: Post PR comment
+      if: steps.check.outputs.comment-file != ''
+      uses: couimet/github-actions/publish-pr-comment@main
+      with:
+        comment-file: ${{ steps.check.outputs.comment-file }}
+        github-token: ${{ inputs.github-token }}
+        header: ${{ inputs.header }}
+
+    - name: Fail on drift
+      if: steps.check.outputs.comment-file != ''
+      shell: bash
+      run: |
+        echo "::error::Generated files are out of sync with their sources. Check the PR comment above for details."
+        exit 1

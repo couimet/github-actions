@@ -103,6 +103,12 @@ jobs:
           path: tests
           github-token: ${{ github.token }}
 
+      - name: Test check-generated-drift action
+        uses: ./check-generated-drift
+        with:
+          command: 'true'
+          github-token: ${{ github.token }}
+
       - name: Test coverage-comment action
         if: github.event_name == 'pull_request'
         uses: ./coverage-comment
