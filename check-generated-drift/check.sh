@@ -18,7 +18,7 @@ main() {
 
   bash -euo pipefail -c "$COMMAND"
 
-  if ! git diff --quiet; then
+  if [ -n "$(git status --porcelain)" ]; then
     local comment_file
     comment_file="$(mktemp)"
 
@@ -36,8 +36,8 @@ main() {
 
       local drifted_file
       while IFS= read -r drifted_file; do
-        echo "- \`$drifted_file\`"
-      done < <(git diff --name-only)
+        echo "- \`${drifted_file:3}\`"
+      done < <(git status --porcelain)
 
       echo ""
       echo "Run the command locally and commit the result."

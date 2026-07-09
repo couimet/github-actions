@@ -37,7 +37,7 @@ runs:
         header: ${{ inputs.header }}
 
     - name: Fail on drift
-      if: steps.check.outputs.comment-file != ''
+      if: always() && steps.check.outputs.comment-file != ''
       shell: bash
       run: |
         echo "::error::Generated files are out of sync with their sources. Check the PR comment above for details."

@@ -64,3 +64,15 @@ teardown() {
   [ "$status" -eq 0 ]
   [ -f "$TEST_TEMP_DIR/subdir/was-here" ]
 }
+
+# T5 — command creates untracked file, detected as drift
+@test "command creates untracked file -> detected as drift" {
+  COMMAND='echo "new content" > new-untracked-file.txt' run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  grep -q "comment-file=" "$GITHUB_OUTPUT"
+
+  comment_file="$(grep "^comment-file=" "$GITHUB_OUTPUT" | sed 's/^comment-file=//')"
+  [ -f "$comment_file" ]
+  grep -q "Generated drift detected" "$comment_file"
+  grep -q "new-untracked-file.txt" "$comment_file"
+}
