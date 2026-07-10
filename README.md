@@ -67,6 +67,32 @@ steps:
   - uses: couimet/github-actions/build@main
 ```
 
+### `check-generated-drift`
+
+Runs a configurable command (e.g., `pnpm api:types`, `make generate`) and fails if `git diff` detects any uncommitted changes. On drift, posts a sticky PR comment listing the files that are out of sync. Use this to guard against PRs that edit a source spec without re-running codegen.
+
+| Input               | Required | Default                 | Description                                                                  |
+| ------------------- | -------- | ----------------------- | ---------------------------------------------------------------------------- |
+| `command`           | yes      | (none)                  | Shell command that regenerates generated files.                              |
+| `github-token`      | yes      | (none)                  | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN`.           |
+| `header`            | no       | `Generated drift check` | Unique header that identifies the PR comment across re-runs (sticky update). |
+| `working-directory` | no       | `.`                     | Directory to run the command in.                                             |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/check-generated-drift@main
+    with:
+      command: pnpm api:types
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
 ### `check-no-prerelease-deps`
 
 Scans all `package.json` files under the working directory for prerelease dependency patterns (`-alpha`, `-beta`, `-rc`, `-pre`) in `dependencies`, `devDependencies`, `peerDependencies`, and `optionalDependencies`. The step fails if any prerelease dependency is found. Used in CI to prevent accidentally depending on prerelease packages in main-branch PRs.
