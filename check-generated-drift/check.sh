@@ -18,7 +18,10 @@ main() {
 
   bash -euo pipefail -c "$COMMAND"
 
-  if [ -n "$(git status --porcelain)" ]; then
+  local porcelain_output
+  porcelain_output="$(git status --porcelain)"
+
+  if [ -n "$porcelain_output" ]; then
     local comment_file
     comment_file="$(mktemp)"
 
@@ -37,7 +40,7 @@ main() {
       local drifted_file
       while IFS= read -r drifted_file; do
         echo "- \`${drifted_file:3}\`"
-      done < <(git status --porcelain)
+      done <<< "$porcelain_output"
 
       echo ""
       echo "Run the command locally and commit the result."
