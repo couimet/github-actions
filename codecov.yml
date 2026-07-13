@@ -1,0 +1,25 @@
+# Codecov configuration for couimet/github-actions.
+# See: https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    project:
+      default:
+        # Coverage must not drop relative to the base commit. On main, a
+        # recent parent commit is used as the reference. The threshold allows
+        # minor fluctuations without blocking the PR.
+        target: auto
+        threshold: 1%
+
+    patch:
+      default:
+        # Patch coverage check is informational only -- don't block PRs on it.
+        informational: true
+
+comment:
+  # Show coverage summary on every PR. The layout mirrors what
+  # coverage-comment already posts, so the Codecov comment adds the delta
+  # vs base that the coverage-comment action does not compute.
+  layout: 'reach, diff, flags, files, footer'
+  behavior: default
+  require_changes: false

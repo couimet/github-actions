@@ -17,6 +17,10 @@ inputs:
     description: "Whether to post a coverage report as a PR comment after tests. Requires 'pull-requests: write' on the job."
     required: false
     default: 'true'
+  codecov-upload:
+    description: 'Whether to upload coverage to Codecov after tests. Uses the standard Jest lcov output path.'
+    required: false
+    default: 'true'
   format-command:
     description: 'Command to run for formatting.'
     required: false
@@ -85,6 +89,12 @@ runs:
       uses: couimet/github-actions/coverage-comment@main
       with:
         github-token: ${{ github.token }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Upload coverage to Codecov
+      if: inputs.codecov-upload == 'true'
+      uses: couimet/github-actions/codecov-typescript-upload@main
+      with:
         working-directory: ${{ inputs.working-directory }}
 
     - name: Guard versions

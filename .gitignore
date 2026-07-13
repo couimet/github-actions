@@ -4,4 +4,7 @@
 # Node / pnpm
 node_modules/
 
+# Generated coverage output
+coverage/
+
 .history
