@@ -1,0 +1,35 @@
+name: 'Upload coverage to Codecov'
+description: 'Uploads a coverage report to Codecov. Thin wrapper around codecov/codecov-action. Language-agnostic -- use codecov-typescript-upload for TypeScript/Jest projects.'
+
+inputs:
+  files:
+    description: 'Coverage report file(s) to upload (glob). Required -- the path depends on your language and test runner.'
+    required: true
+  working-directory:
+    description: 'Directory to run in. Coverage file paths are relative to this directory.'
+    required: false
+    default: '.'
+  flags:
+    description: 'Codecov flags to apply to the upload (e.g. unit, integration).'
+    required: false
+    default: ''
+  token:
+    description: 'Codecov upload token. Not needed for public repos; required for private repos.'
+    required: false
+    default: ''
+  fail-ci-if-error:
+    description: "When 'true', fails the CI step if the upload to Codecov fails."
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      with:
+        files: ${{ inputs.files }}
+        directory: ${{ inputs.working-directory }}
+        flags: ${{ inputs.flags }}
+        token: ${{ inputs.token }}
+        fail_ci_if_error: ${{ inputs.fail-ci-if-error }}

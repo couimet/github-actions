@@ -2,6 +2,8 @@
 
 Shared composite GitHub Actions to keep CI bootstrap consistent across projects rather than copy-pasted into each one.
 
+[![codecov](https://codecov.io/gh/couimet/github-actions/branch/main/graph/badge.svg)](https://codecov.io/gh/couimet/github-actions)
+
 ## Available actions
 
 Listed alphabetically.
@@ -144,6 +146,58 @@ steps:
   - uses: couimet/github-actions/check-todos@main
     with:
       base-ref: ${{ github.event.pull_request.base.sha }}
+```
+
+### `codecov-typescript-upload`
+
+Uploads a Jest coverage report to Codecov. Thin wrapper around [codecov/codecov-action](https://github.com/codecov/codecov-action) with TypeScript/Jest defaults. For non-JS projects, use the generic `codecov-upload` action instead.
+
+| Input               | Required | Default              | Description                                                              |
+| ------------------- | -------- | -------------------- | ------------------------------------------------------------------------ |
+| `files`             | no       | `coverage/lcov.info` | Coverage report file(s) to upload (glob).                                |
+| `working-directory` | no       | `.`                  | Directory to run in. Coverage file paths are relative to this directory. |
+| `flags`             | no       | (empty)              | Codecov flags to apply to the upload (e.g. `unit`, `integration`).       |
+| `token`             | no       | (empty)              | Codecov upload token. Not needed for public repos.                       |
+| `fail-ci-if-error`  | no       | `false`              | When `true`, fails the CI step if the upload fails.                      |
+
+This action has no outputs; success or failure is reported through the step exit code, although Codecov upload failures do not fail the step by default (set `fail-ci-if-error` to `true` to change that).
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/test@main
+  - uses: couimet/github-actions/codecov-typescript-upload@main
+```
+
+### `codecov-upload`
+
+Uploads a coverage report to Codecov. Language-agnostic wrapper around [codecov/codecov-action](https://github.com/codecov/codecov-action). For TypeScript/Jest projects, use `codecov-typescript-upload` for sensible defaults.
+
+| Input               | Required | Default | Description                                                              |
+| ------------------- | -------- | ------- | ------------------------------------------------------------------------ |
+| `files`             | yes      | (none)  | Coverage report file(s) to upload (glob).                                |
+| `working-directory` | no       | `.`     | Directory to run in. Coverage file paths are relative to this directory. |
+| `flags`             | no       | (empty) | Codecov flags to apply to the upload (e.g. `unit`, `integration`).       |
+| `token`             | no       | (empty) | Codecov upload token. Not needed for public repos.                       |
+| `fail-ci-if-error`  | no       | `false` | When `true`, fails the CI step if the upload fails.                      |
+
+This action has no outputs; success or failure is reported through the step exit code, although Codecov upload failures do not fail the step by default (set `fail-ci-if-error` to `true` to change that).
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/test@main
+    with:
+      command: make test-coverage
+  - uses: couimet/github-actions/codecov-upload@main
+    with:
+      files: build/coverage/lcov.info
 ```
 
 ### `coverage-comment`
@@ -459,6 +513,7 @@ Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as s
 | `build-command`            | no       | `pnpm build`     | Command to run for building.                                                     |
 | `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.           |
 | `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch. |
+| `codecov-upload`           | no       | `true`           | Whether to upload coverage to Codecov from the test job.                         |
 | `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests.                   |
 | `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                   |
 | `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).            |
@@ -487,7 +542,7 @@ CI / check-no-prerelease-deps
 CI / check-todos
 ```
 
-Toggle off individual jobs with their boolean inputs (e.g., `guard-versions: false`). The `coverage-comment` step inside the test job only runs on `pull_request` events.
+Toggle off individual jobs with their boolean inputs (e.g., `guard-versions: false`). The `coverage-comment` step inside the test job only runs on `pull_request` events. Coverage is uploaded to Codecov by default; set `codecov-upload: false` to disable.
 
 ## Development
 

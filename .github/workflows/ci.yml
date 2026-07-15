@@ -71,6 +71,17 @@ jobs:
         with:
           working-directory: tests
 
+      - name: Upload coverage to Codecov (TypeScript)
+        uses: ./codecov-typescript-upload
+        with:
+          working-directory: tests
+
+      - name: Upload coverage to Codecov (generic)
+        uses: ./codecov-upload
+        with:
+          files: coverage/lcov.info
+          working-directory: tests
+
       - name: Test guard-versions action
         uses: ./guard-versions
         with:
@@ -115,7 +126,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           working-directory: tests
-          coverage-summary-path: coverage-summary.json
+          coverage-summary-path: coverage/coverage-summary.json
 
       - name: Run shell tests (BATS)
         uses: ./bats-test

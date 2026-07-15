@@ -47,6 +47,10 @@ on:
         required: false
         type: boolean
         default: true
+      codecov-upload:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   format:
@@ -136,6 +140,11 @@ jobs:
         uses: couimet/github-actions/coverage-comment@main
         with:
           github-token: ${{ github.token }}
+          working-directory: ${{ inputs.working-directory }}
+
+      - if: inputs.codecov-upload
+        uses: couimet/github-actions/codecov-typescript-upload@main
+        with:
           working-directory: ${{ inputs.working-directory }}
 
   guard-versions:
