@@ -94,10 +94,6 @@ jobs:
         with:
           working-directory: tests
           guard-versions: false
-          # codecov-upload disabled: codecov-typescript-upload@main doesn't
-          # resolve until this action is on main. Direct ./codecov-*-upload
-          # steps above still validate the new actions.
-          codecov-upload: false
 
       - name: Test check-no-prerelease-deps action
         uses: ./check-no-prerelease-deps
@@ -141,10 +137,6 @@ jobs:
     with:
       working-directory: tests
       guard-versions: true
-      # codecov-upload disabled: codecov-typescript-upload@main doesn't
-      # resolve until this action is on main. The direct ./codecov-*-upload
-      # steps in the self-test job above still validate the new actions.
-      codecov-upload: false
 
   self-test-ci-checks:
     name: Self-test ci-checks workflow
