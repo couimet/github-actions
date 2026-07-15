@@ -487,7 +487,7 @@ Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as s
 | `build-command`            | no       | `pnpm build`     | Command to run for building.                                                     |
 | `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.           |
 | `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch. |
-| `codecov-upload`           | no       | `true`           | Whether to upload coverage to Codecov from the test job.                        |
+| `codecov-upload`           | no       | `true`           | Whether to upload coverage to Codecov from the test job.                         |
 | `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests.                   |
 | `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                   |
 | `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).            |
