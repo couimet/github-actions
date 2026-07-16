@@ -7,4 +7,9 @@ node_modules/
 # Generated coverage output
 coverage/
 
+# Codecov CLI download artifacts
+codecov
+codecov.SHA256SUM
+codecov.SHA256SUM.sig
+
 .history
