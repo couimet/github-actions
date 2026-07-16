@@ -1,0 +1,97 @@
+version: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/setup-node-pnpm'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/install-deps'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/bats-test'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/codecov-upload'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/codecov-typescript-upload'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/coverage-comment'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/publish-pr-comment'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      actions:
+        patterns:
+          - '*'
