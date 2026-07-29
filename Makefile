@@ -22,6 +22,7 @@ install-prereqs:
 	command -v node >/dev/null 2>&1 || { echo "Missing: node — install it: brew install node@24"; ok=false; }; \
 	command -v bats >/dev/null 2>&1 || { echo "Missing: bats — install it: brew install bats-core"; ok=false; }; \
 	command -v shellcheck >/dev/null 2>&1 || { echo "Missing: shellcheck — install it: brew install shellcheck"; ok=false; }; \
+	command -v uv >/dev/null 2>&1 || { echo "Missing: uv — install it: brew install uv"; ok=false; }; \
 	$$ok || { echo; echo "Install the missing prerequisites above, then re-run make install-prereqs."; exit 1; }
 
 lint: install-prereqs lint-md fmt-check lint-sh

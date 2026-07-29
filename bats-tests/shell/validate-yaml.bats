@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 
-ACTION_DIR="$(cd "$(dirname "${BATS_TEST_FILENAME}")/.." && pwd)"
+load test_helper
+
+ACTION_DIR="$PROJECT_ROOT/validate-yaml"
 FIXTURES="$ACTION_DIR/tests/fixtures"
 VALIDATE="$ACTION_DIR/validate.sh"
 SCHEMA="$FIXTURES/valid.schema.json"
@@ -8,8 +10,14 @@ VALID="$FIXTURES/valid.yml"
 INVALID="$FIXTURES/invalid-missing-context.yml"
 
 setup() {
+  TEST_TEMP_DIR="$(mktemp -d)"
+  export TEST_TEMP_DIR
   cd "$ACTION_DIR"
   uv sync --locked --quiet
+}
+
+teardown() {
+  rm -rf "${TEST_TEMP_DIR:?}"
 }
 
 @test "valid YAML file passes validation" {
