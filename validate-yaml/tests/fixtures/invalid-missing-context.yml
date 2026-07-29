@@ -1,0 +1,5 @@
+- date: '2026-07-07'
+  linkedin:
+    url: https://www.linkedin.com/feed/update/urn:li:activity:12345/
+    content: |
+      Missing the required context field.

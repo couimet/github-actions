@@ -1,0 +1,6 @@
+- date: '2026-07-07'
+  context: 'Test post'
+  linkedin:
+    url: https://www.linkedin.com/feed/update/urn:li:activity:12345/
+    content: |
+      This is a valid post.

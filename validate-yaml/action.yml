@@ -1,0 +1,26 @@
+name: Validate YAML against JSON Schema
+description: Validates a YAML file against a JSON Schema file.
+
+inputs:
+  schema:
+    description: Path to the JSON Schema file
+    required: true
+  file:
+    description: Path to the YAML file to validate
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+
+    - name: Validate YAML
+      shell: bash
+      env:
+        SCHEMA: ${{ inputs.schema }}
+        FILE: ${{ inputs.file }}
+      run: |
+        cd "${{ github.action_path }}"
+        uv sync --locked
+        uv run --locked ./validate.sh "$GITHUB_WORKSPACE/$SCHEMA" "$GITHUB_WORKSPACE/$FILE"

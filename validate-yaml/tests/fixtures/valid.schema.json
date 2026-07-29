@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "date": { "type": "string" },
+      "context": { "type": "string" }
+    },
+    "required": ["date", "context"],
+    "additionalProperties": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "required": ["url", "content"],
+      "additionalProperties": false
+    },
+    "minProperties": 3
+  }
+}

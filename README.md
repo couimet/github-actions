@@ -500,6 +500,28 @@ steps:
       build-command: pnpm compile
 ```
 
+### `validate-yaml`
+
+Validates a YAML file against a JSON Schema file. Uses Python (jsonschema + pyyaml) managed by uv for reproducible dependency resolution. The step fails if the YAML file does not conform to the schema.
+
+| Input    | Required | Default | Description                        |
+| -------- | -------- | ------- | ---------------------------------- |
+| `schema` | yes      | (none)  | Path to the JSON Schema file.      |
+| `file`   | yes      | (none)  | Path to the YAML file to validate. |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/validate-yaml@main
+    with:
+      schema: path/to/schema.json
+      file: path/to/data.yml
+```
+
 ## Available workflows
 
 Listed alphabetically.
