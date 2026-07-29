@@ -23,4 +23,4 @@ runs:
       run: |
         cd "${{ github.action_path }}"
         uv sync --locked
-        uv run --locked validate.sh "$GITHUB_WORKSPACE/$SCHEMA" "$GITHUB_WORKSPACE/$FILE"
+        uv run --locked ./validate.sh "$GITHUB_WORKSPACE/$SCHEMA" "$GITHUB_WORKSPACE/$FILE"
