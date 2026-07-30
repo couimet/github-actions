@@ -55,6 +55,10 @@ on:
         required: false
         type: boolean
         default: true
+      codecov-files:
+        required: false
+        type: string
+        default: 'coverage/lcov.info'
 
 jobs:
   format:
@@ -160,6 +164,7 @@ jobs:
       - if: inputs.codecov-upload
         uses: couimet/github-actions/codecov-typescript-upload@main
         with:
+          files: ${{ inputs.codecov-files }}
           working-directory: ${{ inputs.working-directory }}
 
   guard-versions:
