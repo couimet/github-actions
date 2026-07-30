@@ -13,3 +13,8 @@ codecov.SHA256SUM
 codecov.SHA256SUM.sig
 
 .history
+
+# Python
+__pycache__/
+*.pyc
+.venv/

@@ -95,6 +95,12 @@ jobs:
           working-directory: tests
           guard-versions: false
 
+      - name: Test validate-yaml action
+        uses: ./validate-yaml
+        with:
+          schema: validate-yaml/tests/fixtures/valid.schema.json
+          file: validate-yaml/tests/fixtures/valid.yml
+
       - name: Test check-no-prerelease-deps action
         uses: ./check-no-prerelease-deps
         with:
