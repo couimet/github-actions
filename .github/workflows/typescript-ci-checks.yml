@@ -19,6 +19,10 @@ on:
         required: false
         type: string
         default: 'pnpm lint'
+      markdownlint:
+        required: false
+        type: boolean
+        default: true
       build-command:
         required: false
         type: string
@@ -94,6 +98,17 @@ jobs:
       - uses: couimet/github-actions/lint@main
         with:
           command: ${{ inputs.lint-command }}
+          working-directory: ${{ inputs.working-directory }}
+
+  markdownlint:
+    if: inputs.markdownlint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - *checkout
+      - uses: couimet/github-actions/markdownlint@main
+        with:
           working-directory: ${{ inputs.working-directory }}
 
   build:
