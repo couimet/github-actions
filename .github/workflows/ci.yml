@@ -149,6 +149,7 @@ jobs:
     with:
       working-directory: tests
       guard-versions: true
+      build-artifact-paths: ''
 
   self-test-ci-checks:
     name: Self-test ci-checks workflow
