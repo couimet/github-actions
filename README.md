@@ -534,7 +534,7 @@ The `test` job depends on `build` (`needs: [build]`). When the build fails, test
 
 | Input                      | Required | Default              | Description                                                                                                                                            |
 | -------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `build-artifact-paths`     | no       | `packages/*/out/`    | Multi-line globs of build output to pass from the build job to the test job. Set to an empty string to disable the artifact upload/download.
+| `build-artifact-paths`     | no       | `packages/*/out/`    | Multi-line globs of build output to pass from the build job to the test job. Set to an empty string to disable the artifact upload/download.           |
 | `build-command`            | no       | `pnpm build`         | Command to run for building.                                                                                                                           |
 | `check-no-prerelease-deps` | no       | `true`               | Whether to check for prerelease dependency patterns in `package.json`.                                                                                 |
 | `check-todos`              | no       | `true`               | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                       |
