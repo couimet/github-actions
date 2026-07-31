@@ -64,6 +64,11 @@ on:
         type: string
         default: ''
 
+    secrets:
+      codecov-token:
+        required: false
+        description: 'Codecov upload token. Preferred path for passing secrets.CODECOV_TOKEN. Falls back to the input of the same name for backward compatibility.'
+
 jobs:
   format:
     runs-on: ubuntu-latest
@@ -170,7 +175,7 @@ jobs:
         with:
           files: ${{ inputs.codecov-files }}
           working-directory: ${{ inputs.working-directory }}
-          token: ${{ inputs.codecov-token }}
+          token: ${{ secrets.codecov-token || inputs.codecov-token }}
 
   guard-versions:
     if: inputs.guard-versions && github.event_name == 'pull_request'
