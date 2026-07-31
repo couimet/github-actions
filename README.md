@@ -536,7 +536,7 @@ Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as s
 | `check-no-prerelease-deps` | no       | `true`               | Whether to check for prerelease dependency patterns in `package.json`.                                                                                 |
 | `check-todos`              | no       | `true`               | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                       |
 | `codecov-files`            | no       | `coverage/lcov.info` | Coverage report file(s) to upload (glob). Passed through to `codecov-typescript-upload`. Useful for monorepos (e.g., `packages/*/coverage/lcov.info`). |
-| `codecov-token`            | no       | (empty)              | Codecov upload token for private repos and fork PRs. Passed through to `codecov-typescript-upload`.                                                    |
+| `codecov-token`            | no       | (empty)              | Codecov upload token for private repos and fork PRs. Prefer the identically named `codecov-token` secret instead; this input is kept as a fallback.    |
 | `codecov-upload`           | no       | `true`               | Whether to upload coverage to Codecov from the test job.                                                                                               |
 | `coverage-comment`         | no       | `true`               | Whether to post a coverage report as a PR comment after tests.                                                                                         |
 | `format-command`           | no       | `pnpm format`        | Command to run for formatting.                                                                                                                         |
@@ -546,12 +546,18 @@ Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as s
 | `test-command`             | no       | `pnpm test`          | Command to run for testing.                                                                                                                            |
 | `working-directory`        | no       | `.`                  | Directory containing `package.json`.                                                                                                                   |
 
+| Secret          | Required | Description                                                                                                                        |
+| --------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `codecov-token` | no       | Codecov upload token. Use this instead of the input when passing `secrets.CODECOV_TOKEN` from the caller. Falls back to the input. |
+
 ```yaml
 jobs:
   ci:
     uses: couimet/github-actions/.github/workflows/typescript-ci-checks.yml@main
     with:
       working-directory: .
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 ```
 
 Each job runs in parallel and appears as a separate check:
