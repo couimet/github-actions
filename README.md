@@ -530,8 +530,11 @@ Listed alphabetically.
 
 Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as separate jobs so each produces its own PR status check. Use this when you want per-step visibility in the PR status section; use the composite `typescript-ci` action when you prefer fewer runner minutes and a single check entry.
 
+The `test` job depends on `build` (`needs: [build]`). When the build fails, tests are skipped to surface the right failure fast. Pass compiled output (or any generated files) from build to test via `build-artifact-paths` to avoid recompiling in the test runner.
+
 | Input                      | Required | Default              | Description                                                                                                                                            |
 | -------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `build-artifact-paths`     | no       | `packages/*/out/`    | Multi-line globs of build output to pass from the build job to the test job. Set to an empty string to disable the artifact upload/download.
 | `build-command`            | no       | `pnpm build`         | Command to run for building.                                                                                                                           |
 | `check-no-prerelease-deps` | no       | `true`               | Whether to check for prerelease dependency patterns in `package.json`.                                                                                 |
 | `check-todos`              | no       | `true`               | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                       |
