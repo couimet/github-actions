@@ -13,11 +13,11 @@
 
 <rule id="CI001" priority="critical">
   <title>Third-party actions pinned to commit SHA</title>
-  <do>Pin every third-party action (e.g. `actions/checkout`) to a full commit SHA with a `# vX.Y.Z` version comment</do>
+  <do>Pin every third-party action (e.g. `actions/checkout`) to a full commit SHA WITHOUT a `# vX.Y.Z` version comment to prevent drift</do>
   <never>Use floating version refs like `@v4` or `@main` for third-party actions</never>
   <good-example>
     ```yaml
-    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
     ```
   </good-example>
   <bad-example>

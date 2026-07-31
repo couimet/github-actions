@@ -59,6 +59,10 @@ on:
         required: false
         type: string
         default: 'coverage/lcov.info'
+      codecov-token:
+        required: false
+        type: string
+        default: ''
 
 jobs:
   format:
@@ -67,7 +71,7 @@ jobs:
       contents: read
     steps:
       - &checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - uses: couimet/github-actions/setup-node-pnpm@main
@@ -166,6 +170,7 @@ jobs:
         with:
           files: ${{ inputs.codecov-files }}
           working-directory: ${{ inputs.working-directory }}
+          token: ${{ inputs.codecov-token }}
 
   guard-versions:
     if: inputs.guard-versions && github.event_name == 'pull_request'
@@ -174,7 +179,7 @@ jobs:
       contents: read
     steps:
       - &checkout-depth-0
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
           fetch-depth: 0
