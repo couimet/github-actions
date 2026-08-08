@@ -256,3 +256,38 @@ MOCK_CURL
   [ "$status" -eq 0 ]
   [ ! -f "$TEST_TEMP_DIR/codecov.log" ]
 }
+
+@test "fail-ci-if-error true: appends -Z flag to codecov invocation" {
+  setup_mocks
+  mkdir -p "$TEST_TEMP_DIR/packages/mypkg/coverage"
+  echo 'dummy coverage' > "$TEST_TEMP_DIR/packages/mypkg/coverage/lcov.info"
+
+  run env \
+    FILES="packages/mypkg/coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    CODECOV_TOKEN="test-token" \
+    PER_PACKAGE_FLAGS_BASE="packages" \
+    FAIL_CI_IF_ERROR="true" \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 0 ]
+  grep -qF -- "-f packages/mypkg/coverage/lcov.info -F mypkg -Z" "$TEST_TEMP_DIR/codecov.log"
+}
+
+@test "fail-ci-if-error false: omits -Z flag from codecov invocation" {
+  setup_mocks
+  mkdir -p "$TEST_TEMP_DIR/packages/mypkg/coverage"
+  echo 'dummy coverage' > "$TEST_TEMP_DIR/packages/mypkg/coverage/lcov.info"
+
+  run env \
+    FILES="packages/mypkg/coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    CODECOV_TOKEN="test-token" \
+    PER_PACKAGE_FLAGS_BASE="packages" \
+    FAIL_CI_IF_ERROR="false" \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 0 ]
+  grep -qF -- "-f packages/mypkg/coverage/lcov.info -F mypkg" "$TEST_TEMP_DIR/codecov.log"
+  ! grep -qF -- "-Z" "$TEST_TEMP_DIR/codecov.log"
+}

@@ -54,6 +54,7 @@ runs:
         FILES: ${{ inputs.files }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         CODECOV_TOKEN: ${{ inputs.token }}
+        FAIL_CI_IF_ERROR: ${{ inputs.fail-ci-if-error }}
         PER_PACKAGE_FLAGS_BASE: ${{ inputs.per-package-flags-base }}
         PER_PACKAGE_FLAGS_PATTERN: ${{ inputs.per-package-flags-pattern }}
       run: bash "${{ github.action_path }}/upload-per-package.sh"
