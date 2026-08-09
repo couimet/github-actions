@@ -243,6 +243,22 @@ MOCK_CURL
   [ ! -f "$TEST_TEMP_DIR/codecov.log" ]
 }
 
+@test "unmatched in-base glob: skips literal path without uploading" {
+  setup_mocks
+
+  # Unmatched glob inside the base — the literal string packages/*/coverage/lcov.info
+  # must not reach ./codecov, even though it matches the packages/ prefix.
+  run env \
+    FILES="packages/*/coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    CODECOV_TOKEN="test-token" \
+    PER_PACKAGE_FLAGS_BASE="packages" \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 0 ]
+  [ ! -f "$TEST_TEMP_DIR/codecov.log" ]
+}
+
 @test "no matching files: exits successfully without uploading" {
   setup_mocks
 

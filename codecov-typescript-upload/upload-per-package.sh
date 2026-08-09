@@ -13,6 +13,7 @@ curl -Os https://uploader.codecov.io/latest/linux/codecov
 chmod +x codecov
 
 for f in $files; do
+  [ -f "$f" ] || continue
   if [ -n "$pattern" ]; then
     pkg=$(echo "$f" | sed "$pattern")
   elif [ -n "$base" ]; then
