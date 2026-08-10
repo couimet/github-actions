@@ -9,9 +9,20 @@ fail_ci_if_error="${FAIL_CI_IF_ERROR:-false}"
 
 cd "$working_dir"
 
-curl -Os https://uploader.codecov.io/latest/linux/codecov
-chmod +x codecov
+# Validate pattern doesn't contain dangerous sed flags (defense-in-depth).
+# The 'e' flag in GNU sed executes the replacement as a shell command.
+if [ -n "$pattern" ]; then
+  delim="${pattern:1:1}"
+  flags="${pattern##*$delim}"
+  if [[ "$flags" == *e* ]]; then
+    echo "Error: PER_PACKAGE_FLAGS_PATTERN contains unsupported 'e' flag" >&2
+    exit 1
+  fi
+fi
 
+# Phase 1: collect valid (file, flag) pairs before downloading Codecov.
+upload_files=()
+upload_flags=()
 for f in $files; do
   [ -f "$f" ] || continue
   if [ -n "$pattern" ]; then
@@ -31,8 +42,21 @@ for f in $files; do
     pkg=$(echo "$f" | awk -F/ 'NF >= 3 {print $1}')
   fi
   if [ -n "$pkg" ] && [ "$pkg" != "$f" ]; then
-    codecov_args=(-f "$f" -F "$pkg")
-    [ "$fail_ci_if_error" = "true" ] && codecov_args+=(-Z)
-    ./codecov "${codecov_args[@]}"
+    upload_files+=("$f")
+    upload_flags+=("$pkg")
   fi
+done
+
+# Exit successfully when no package uploads are needed. The repository-wide
+# upload in the calling action.yml is the fallback.
+[ ${#upload_files[@]} -eq 0 ] && exit 0
+
+# Phase 2: download Codecov and upload each package.
+curl -Os https://uploader.codecov.io/latest/linux/codecov
+chmod +x codecov
+
+for i in "${!upload_files[@]}"; do
+  codecov_args=(-f "${upload_files[$i]}" -F "${upload_flags[$i]}")
+  [ "$fail_ci_if_error" = "true" ] && codecov_args+=(-Z)
+  ./codecov "${codecov_args[@]}"
 done

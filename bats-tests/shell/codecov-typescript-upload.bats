@@ -9,6 +9,7 @@ SCRIPT="$PROJECT_ROOT/codecov-typescript-upload/upload-per-package.sh"
 setup_mocks() {
   cat > "$TEST_TEMP_DIR/curl" <<'MOCK_CURL'
 #!/usr/bin/env bash
+echo "called" >> "$TEST_TEMP_DIR/curl.log"
 cat > ./codecov <<'MOCK_CODECOV'
 #!/usr/bin/env bash
 echo "$@" >> "$TEST_TEMP_DIR/codecov.log"
@@ -259,7 +260,7 @@ MOCK_CURL
   [ ! -f "$TEST_TEMP_DIR/codecov.log" ]
 }
 
-@test "no matching files: exits successfully without uploading" {
+@test "no matching files: exits successfully without downloading or uploading" {
   setup_mocks
 
   run env \
@@ -271,6 +272,7 @@ MOCK_CURL
 
   [ "$status" -eq 0 ]
   [ ! -f "$TEST_TEMP_DIR/codecov.log" ]
+  [ ! -f "$TEST_TEMP_DIR/curl.log" ]
 }
 
 @test "fail-ci-if-error true: appends -Z flag to codecov invocation" {
