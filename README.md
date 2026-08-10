@@ -321,7 +321,7 @@ Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/mark
 | Input                  | Required | Default   | Description                                                                                                                        |
 | ---------------------- | -------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `config`               | no       | (empty)   | Path to a config file passed as `--config`. When empty, auto-discovers all config files at the repo root (supports split configs). |
-| `markdownlint-version` | no       | `0.22.1`  | Version of the `markdownlint-cli2` npm package; pinned for local/CI parity.                                                        |
+| `markdownlint-version` | no       | (empty)   | Version of `markdownlint-cli2`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override.            |
 | `paths`                | no       | `**/*.md` | Space-separated glob(s) of Markdown files to lint.                                                                                 |
 | `working-directory`    | no       | `.`       | Directory to run markdownlint in. Set when the target lives in a subdirectory.                                                     |
 
@@ -341,7 +341,7 @@ Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version.
 | ------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
 | `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.             |
 | `paths`             | no       | `.`     | Space-separated path(s) passed to `prettier --check`; the consuming repo's `.prettierignore` governs exclusions. |
-| `prettier-version`  | no       | `3.8.4` | Version of the `prettier` npm package installed globally; pinned for local/CI parity, overridable.               |
+| `prettier-version`  | no       | (empty) | Version of `prettier`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override.   |
 | `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                       |
 
 This action has no outputs; success or failure is reported through the step exit code.

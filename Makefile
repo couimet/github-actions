@@ -10,6 +10,7 @@ check-actions:
 	bash scripts/verify-action-shas.sh
 	bash scripts/verify-no-relative-uses.sh
 	bash scripts/verify-ci-checks-secrets.sh
+	bash scripts/verify-dependabot-npm-coverage.sh
 
 fmt-check:
 	npx --yes prettier@$(PRETTIER_VERSION) --check .
