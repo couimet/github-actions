@@ -63,6 +63,35 @@
   <never>Print questions directly in terminal output; never guess when a clarification would change the implementation</never>
 </rule>
 
+<rule id="CI004" priority="critical">
+  <title>Shell logic goes in .sh files, never inlined in run: blocks</title>
+  <do>Extract non-trivial shell logic into a .sh file inside the action directory. Call it from action.yml via <code>bash &quot;$&#123;&#123; github.action_path }}&quot;/script.sh</code>. Receive inputs as environment variables (uppercase). Start every script with <code>#!/usr/bin/env bash</code> and <code>set -euo pipefail</code>.</do>
+  <never>Inline shell scripts in workflow `run:` blocks or composite action `run:` fields when the logic spans more than one line</never>
+  <rationale>.sh files are testable with BATS (full coverage). Inline `run:` blocks can only be exercised in live CI. Keeping scripts in files also makes the action directory self-contained: action.yml + script.sh + BATS test.</rationale>
+  <good-example>
+    ```yaml
+    # action.yml — script called via github.action_path:
+    - name: Discover coverage files
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      run: bash "${{ github.action_path }}/discover.sh"
+    ```
+  </good-example>
+  <bad-example>
+    ```yaml
+    # action.yml — inline shell in run: is not testable:
+    - shell: bash
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        chmod +x codecov
+        for f in ${{ inputs.files }}; do
+          ./codecov -f "$f" -F "$pkg"
+        done
+    ```
+  </bad-example>
+</rule>
+
 </critical-rules>
 
 ---

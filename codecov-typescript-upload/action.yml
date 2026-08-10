@@ -22,6 +22,18 @@ inputs:
     description: "When 'true', fails the CI step if the upload to Codecov fails."
     required: false
     default: 'false'
+  per-package-flags:
+    description: "When 'true', uploads each matched coverage file individually with a per-package Codecov flag extracted from the file path. The existing single upload still runs as the repository-wide fallback."
+    required: false
+    default: 'false'
+  per-package-flags-base:
+    description: 'Base directory that contains packages. Used with per-package-flags to extract the package name. Set to empty string for repos where packages live at the repository root.'
+    required: false
+    default: 'packages'
+  per-package-flags-pattern:
+    description: 'Full sed substitution pattern for extracting the Codecov flag from a file path. When set, takes precedence over per-package-flags-base. Example: s|src/([^/]*)/.*|\1|'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -34,3 +46,15 @@ runs:
         flags: ${{ inputs.flags }}
         token: ${{ inputs.token }}
         fail_ci_if_error: ${{ inputs.fail-ci-if-error }}
+
+    - name: Upload per-package coverage to Codecov
+      if: inputs.per-package-flags == 'true'
+      shell: bash
+      env:
+        FILES: ${{ inputs.files }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        CODECOV_TOKEN: ${{ inputs.token }}
+        FAIL_CI_IF_ERROR: ${{ inputs.fail-ci-if-error }}
+        PER_PACKAGE_FLAGS_BASE: ${{ inputs.per-package-flags-base }}
+        PER_PACKAGE_FLAGS_PATTERN: ${{ inputs.per-package-flags-pattern }}
+      run: bash "${{ github.action_path }}/upload-per-package.sh"

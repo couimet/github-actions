@@ -67,6 +67,18 @@ on:
         required: false
         type: string
         default: ''
+      codecov-per-package-flags:
+        required: false
+        type: boolean
+        default: false
+      codecov-per-package-flags-base:
+        required: false
+        type: string
+        default: 'packages'
+      codecov-per-package-flags-pattern:
+        required: false
+        type: string
+        default: ''
 
     secrets:
       codecov-token:
@@ -190,6 +202,9 @@ jobs:
           files: ${{ inputs.codecov-files }}
           working-directory: ${{ inputs.working-directory }}
           token: ${{ secrets.codecov-token || inputs.codecov-token }}
+          per-package-flags: ${{ inputs.codecov-per-package-flags }}
+          per-package-flags-base: ${{ inputs.codecov-per-package-flags-base }}
+          per-package-flags-pattern: ${{ inputs.codecov-per-package-flags-pattern }}
 
   guard-versions:
     if: inputs.guard-versions && github.event_name == 'pull_request'
