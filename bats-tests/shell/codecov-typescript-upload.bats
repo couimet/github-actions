@@ -309,3 +309,47 @@ MOCK_CURL
   grep -qF -- "-f packages/mypkg/coverage/lcov.info -F mypkg" "$TEST_TEMP_DIR/codecov.log"
   ! grep -qF -- "-Z" "$TEST_TEMP_DIR/codecov.log"
 }
+
+@test "pattern validation: rejects pattern not starting with s+delim" {
+  run env \
+    FILES="coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    PER_PACKAGE_FLAGS_PATTERN="x|old|new|" \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 1 ]
+  grep -qF "must be a single 's' substitution command" <<< "$output"
+}
+
+@test "pattern validation: rejects multi-command pattern with semicolon" {
+  run env \
+    FILES="coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    PER_PACKAGE_FLAGS_PATTERN="s|.*|printf ok|e;s|x|y|" \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 1 ]
+  grep -qF "must contain a single substitution command" <<< "$output"
+}
+
+@test "pattern validation: rejects newline-separated commands" {
+  run env \
+    FILES="coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    PER_PACKAGE_FLAGS_PATTERN=$'s|old|new|\ns|x|y|' \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 1 ]
+  grep -qF "must contain a single substitution command" <<< "$output"
+}
+
+@test "pattern validation: rejects e flag" {
+  run env \
+    FILES="coverage/lcov.info" \
+    WORKING_DIRECTORY="$TEST_TEMP_DIR" \
+    PER_PACKAGE_FLAGS_PATTERN="s|.*|echo pwned|e" \
+    bash "$SCRIPT"
+
+  [ "$status" -eq 1 ]
+  grep -qF "contains unsupported 'e' flag" <<< "$output"
+}

@@ -13,7 +13,18 @@ cd "$working_dir"
 # The 'e' flag in GNU sed executes the replacement as a shell command.
 if [ -n "$pattern" ]; then
   delim="${pattern:1:1}"
-  flags="${pattern##*$delim}"
+  # Reject patterns that don't start with 's' followed by a delimiter
+  if [[ "$pattern" != s"$delim"* ]]; then
+    echo "Error: PER_PACKAGE_FLAGS_PATTERN must be a single 's' substitution command" >&2
+    exit 1
+  fi
+  # Reject multi-command patterns (semicolons, newlines)
+  if [[ "$pattern" == *";"* || "$pattern" == *$'\n'* ]]; then
+    echo "Error: PER_PACKAGE_FLAGS_PATTERN must contain a single substitution command" >&2
+    exit 1
+  fi
+  # Reject the 'e' flag (only meaningful after the last delimiter)
+  flags="${pattern##*"$delim"}"
   if [[ "$flags" == *e* ]]; then
     echo "Error: PER_PACKAGE_FLAGS_PATTERN contains unsupported 'e' flag" >&2
     exit 1
