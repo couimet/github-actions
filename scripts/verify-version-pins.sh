@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Verify that each action's version-pin default matches versions.mk.
+# Verify that each action's version pin matches versions.mk.
 #
-# versions.mk is the single source of truth for tool versions. Composite action
-# inputs::default is static (GitHub Actions does not support dynamic defaults),
-# so this check catches drift between the two.
+# versions.mk is the single source of truth for tool versions. When an action
+# has a package.json (npm_package field is set), the version is read from
+# devDependencies there. Otherwise the action.yml input default is checked.
+# Both paths must match versions.mk.
 #
 # Inputs (env):
 #   VERSIONS_MK_PATH  path to versions.mk (default: <repo_root>/versions.mk)
 #   ACTION_ROOT       dir containing action subdirectories (default: <repo_root>)
-#   CHECKS            space-or-newline-separated list of var dir input entries
+#   CHECKS            space-or-newline-separated list of var dir input [pkg] entries
 #                     (default: hardcoded list below)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,15 +40,18 @@ get_version() {
   echo "$val"
 }
 
-# Default checks: var_name action_dir input_name
+# Default checks: var_name action_dir input_name npm_package
+# When npm_package is set, the version is read from that key in
+# <action_dir>/package.json devDependencies instead of the action.yml input default.
 DEFAULT_CHECKS="
-PRETTIER_VERSION prettier prettier-version
-MARKDOWNLINT_VERSION markdownlint markdownlint-version
+PRETTIER_VERSION prettier prettier-version prettier
+MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2
+BATS_VERSION bats-test bats-version bats
 "
 CHECKS="${CHECKS:-$DEFAULT_CHECKS}"
 
 missing=0
-while read -r var action_dir input_name; do
+while read -r var action_dir input_name npm_package; do
   [[ -z "$var" ]] && continue
 
   if ! expected="$(get_version "$var")"; then
@@ -56,32 +60,48 @@ while read -r var action_dir input_name; do
     continue
   fi
 
-  action_yml="$ACTION_ROOT/$action_dir/action.yml"
-  if [[ ! -f "$action_yml" ]]; then
-    echo "::error::Action file not found: ${action_yml}"
-    missing=1
-    continue
-  fi
+  if [[ -n "${npm_package:-}" ]]; then
+    # Read version from package.json devDependencies.
+    package_json="$ACTION_ROOT/$action_dir/package.json"
+    if [[ ! -f "$package_json" ]]; then
+      echo "::error::package.json not found at ${package_json}"
+      missing=1
+      continue
+    fi
+    if ! actual="$(jq -r ".devDependencies[\"${npm_package}\"]" "$package_json" 2>/dev/null)" || [[ -z "$actual" || "$actual" == "null" ]]; then
+      echo "::error::Could not extract devDependencies.${npm_package} from ${package_json}"
+      missing=1
+      continue
+    fi
+  else
+    # Read version from action.yml input default (legacy path).
+    action_yml="$ACTION_ROOT/$action_dir/action.yml"
+    if [[ ! -f "$action_yml" ]]; then
+      echo "::error::Action file not found: ${action_yml}"
+      missing=1
+      continue
+    fi
 
-  # Extract the default value for the input. The YAML structure is:
-  #   <input-name>:
-  #     ...
-  #     default: '<value>'
-  actual="$(awk -v input="$input_name" '
-    $0 ~ "^[[:space:]]*" input ":" { found=1; next }
-    found && /default:/ {
-      gsub(/.*default:[[:space:]]*/, "")
-      gsub(/^'\''|'\''$/, "")
-      gsub(/^"|"$/, "")
-      print
-      exit
-    }
-  ' "$action_yml")"
+    # Extract the default value for the input. The YAML structure is:
+    #   <input-name>:
+    #     ...
+    #     default: '<value>'
+    actual="$(awk -v input="$input_name" '
+      $0 ~ "^[[:space:]]*" input ":" { found=1; next }
+      found && /default:/ {
+        gsub(/.*default:[[:space:]]*/, "")
+        gsub(/^'\''|'\''$/, "")
+        gsub(/^"|"$/, "")
+        print
+        exit
+      }
+    ' "$action_yml")"
 
-  if [[ -z "$actual" ]]; then
-    echo "::error::Could not extract default for input '${input_name}' from ${action_yml}"
-    missing=1
-    continue
+    if [[ -z "$actual" ]]; then
+      echo "::error::Could not extract default for input '${input_name}' from ${action_yml}"
+      missing=1
+      continue
+    fi
   fi
 
   if [[ "$actual" != "$expected" ]]; then
@@ -93,7 +113,7 @@ while read -r var action_dir input_name; do
 done <<< "$CHECKS"
 
 if (( missing )); then
-  echo "::error::One or more version pins have drifted from versions.mk. Update versions.mk first, then update the action default(s) to match."
+  echo "::error::One or more version pins have drifted from versions.mk. Update versions.mk first, then update the version source(s) to match."
   exit 1
 fi
 exit 0

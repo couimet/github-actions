@@ -14,6 +14,14 @@ write_action_yml() {
   printf '%s\n' "$content" > "$TEST_TEMP_DIR/$path"
 }
 
+write_package_json() {
+  local path="$1" content="$2"
+  mkdir -p "$(dirname "$TEST_TEMP_DIR/$path")"
+  printf '%s\n' "$content" > "$TEST_TEMP_DIR/$path"
+}
+
+# -- Legacy path (no npm_package field) --
+
 @test "all pins match -> success" {
   write_versions_mk "PRETTIER_VERSION := 3.8.4"
   write_action_yml "prettier/action.yml" "inputs:
@@ -74,4 +82,86 @@ write_action_yml() {
     bash "$SCRIPT"
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "Action file not found"
+}
+
+# -- npm_package path (package.json extraction via jq) --
+
+@test "npm_package field: version matches package.json -> success" {
+  write_versions_mk "MARKDOWNLINT_VERSION := 0.23.2"
+  write_package_json "markdownlint/package.json" '{"devDependencies":{"markdownlint-cli2":"0.23.2"}}'
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2" \
+    bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
+@test "npm_package field: version drift between package.json and versions.mk -> failure" {
+  write_versions_mk "MARKDOWNLINT_VERSION := 9.9.9"
+  write_package_json "markdownlint/package.json" '{"devDependencies":{"markdownlint-cli2":"0.23.2"}}'
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2" \
+    bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "Version drift"
+}
+
+@test "npm_package field: missing package.json -> failure" {
+  write_versions_mk "MARKDOWNLINT_VERSION := 0.23.2"
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2" \
+    bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "package.json not found"
+}
+
+@test "npm_package field: key not in devDependencies -> failure" {
+  write_versions_mk "MARKDOWNLINT_VERSION := 0.23.2"
+  write_package_json "markdownlint/package.json" '{"devDependencies":{"other-pkg":"1.0.0"}}'
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2" \
+    bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "Could not extract"
+}
+
+@test "npm_package field: variable missing from versions.mk -> failure" {
+  write_versions_mk "OTHER_VERSION := 1.0.0"
+  write_package_json "markdownlint/package.json" '{"devDependencies":{"markdownlint-cli2":"0.23.2"}}'
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2" \
+    bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "not found"
+}
+
+@test "mixed: npm_package and legacy checks in one run -> success" {
+  write_versions_mk "MARKDOWNLINT_VERSION := 0.23.2
+PRETTIER_VERSION := 3.8.4"
+  write_package_json "markdownlint/package.json" '{"devDependencies":{"markdownlint-cli2":"0.23.2"}}'
+  write_action_yml "prettier/action.yml" "inputs:
+  prettier-version:
+    default: '3.8.4'"
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2
+PRETTIER_VERSION prettier prettier-version" \
+    bash "$SCRIPT"
+  [ "$status" -eq 0 ]
 }

@@ -95,3 +95,39 @@ updates:
       actions:
         patterns:
           - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/markdownlint'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      npm:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/prettier'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      npm:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/bats-test'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Toronto'
+    groups:
+      npm:
+        patterns:
+          - '*'
