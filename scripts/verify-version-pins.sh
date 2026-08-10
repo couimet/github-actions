@@ -47,6 +47,7 @@ DEFAULT_CHECKS="
 PRETTIER_VERSION prettier prettier-version prettier
 MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2
 BATS_VERSION bats-test bats-version bats
+BATS_VERSION bats-test bats-version
 "
 CHECKS="${CHECKS:-$DEFAULT_CHECKS}"
 
