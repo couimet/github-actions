@@ -11,6 +11,7 @@ setup() {
   mkdir -p "$TEST_TEMP_DIR/bin"
   cat > "$TEST_TEMP_DIR/bin/markdownlint-cli2" <<'ENDOFSTUB'
 #!/usr/bin/env bash
+echo "markdownlint-cli2 pwd: $(pwd)"
 echo "markdownlint-cli2 args: $*"
 exit 0
 ENDOFSTUB
@@ -60,6 +61,7 @@ teardown() {
   touch "$TEST_TEMP_DIR/subdir/fixture.md"
   run env PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 pwd: .*/subdir$"
   echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
 }
 
@@ -97,5 +99,12 @@ teardown() {
   touch "$TEST_TEMP_DIR/subdir/fixture.md"
   run env MODE=fix PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 pwd: .*/subdir$"
   echo "$output" | grep -q "markdownlint-cli2 args: --fix \*.md$"
+}
+
+@test "rejects invalid MODE" {
+  run env MODE=bogus bash "$SCRIPT"
+  [ "$status" -eq 1 ]
+  echo "$output" | grep -q "ERROR: MODE must be 'check' or 'fix', got 'bogus'"
 }

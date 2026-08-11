@@ -15,6 +15,11 @@ source "$SCRIPT_DIR/../scripts/_lint-helpers.sh"
 
 cd "${WORKING_DIRECTORY:-.}"
 
+if [[ "${MODE:-check}" != "check" && "${MODE:-check}" != "fix" ]]; then
+  echo "ERROR: MODE must be 'check' or 'fix', got '${MODE}'" >&2
+  exit 1
+fi
+
 FIX_ARGS=()
 if [[ "${MODE:-check}" == "fix" ]]; then
   FIX_ARGS+=(--fix)

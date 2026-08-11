@@ -252,12 +252,15 @@ jobs:
 
   auto-fix:
     needs: [format, lint]
-    if: ${{ always() && inputs.auto-fix-command != '' }}
+    if: ${{ !cancelled() && inputs.auto-fix-command != '' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - *checkout
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: couimet/github-actions/setup-node-pnpm@main
         with:
           working-directory: ${{ inputs.working-directory }}

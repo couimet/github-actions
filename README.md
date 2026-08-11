@@ -28,7 +28,7 @@ This action has no outputs; success or failure is reported through the step exit
 steps:
   - uses: actions/checkout@v4
     with:
-      persist-credentials: false
+      persist-credentials: true
   - uses: couimet/github-actions/setup-node-pnpm@main
   - uses: couimet/github-actions/install-deps@main
   - uses: couimet/github-actions/auto-fix@main

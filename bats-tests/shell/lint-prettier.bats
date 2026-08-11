@@ -62,6 +62,12 @@ teardown() {
   echo "$output" | grep -q "prettier args: --write .$"
 }
 
+@test "rejects invalid MODE" {
+  run env MODE=bogus bash "$SCRIPT"
+  [ "$status" -eq 1 ]
+  echo "$output" | grep -q "ERROR: MODE must be 'check' or 'fix', got 'bogus'"
+}
+
 @test "fix mode: passes --config before paths" {
   run env MODE=fix CONFIG=".prettierrc.yaml" bash "$SCRIPT"
   [ "$status" -eq 0 ]
