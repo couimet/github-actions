@@ -100,8 +100,8 @@ teardown() {
   comment_file="$(grep "^comment-file=" "$GITHUB_OUTPUT" | sed 's/^comment-file=//')"
   [ -f "$comment_file" ]
   # new-file.txt was reverted by POST_GENERATE, only tracked-file.txt remains
-  grep -q -- '- \`tracked-file.txt\`' "$comment_file"
-  ! grep -q -- '- \`new-file.txt\`' "$comment_file"
+  grep -q -- '- `tracked-file.txt`' "$comment_file"
+  ! grep -q -- '- `new-file.txt`' "$comment_file"
 }
 
 # T8 — POST_GENERATE failure propagates
