@@ -30,15 +30,15 @@ lint: install-prereqs lint-md fmt-check lint-sh
 
 lint-fix: install-prereqs lint-md-fix format
 
-node_modules: package.json
-	npm install --no-audit --no-fund
-	@touch node_modules
+markdownlint/node_modules: markdownlint/package.json
+	cd markdownlint && npm install --no-audit --no-fund
+	@touch markdownlint/node_modules
 
-lint-md: node_modules
-	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) "**/*.md"
+lint-md: markdownlint/node_modules
+	markdownlint/node_modules/.bin/markdownlint-cli2 "**/*.md"
 
-lint-md-fix: node_modules
-	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) --fix "**/*.md"
+lint-md-fix: markdownlint/node_modules
+	markdownlint/node_modules/.bin/markdownlint-cli2 --fix "**/*.md"
 
 lint-sh:
 	find . -type f \( -name '*.sh' -o -name '*.bash' \) -not -path '*/.claude-work/*' -not -path '*/.history/*' -not -path '*/node_modules/*' -exec shellcheck {} +
