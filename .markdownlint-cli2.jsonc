@@ -1,4 +1,5 @@
 {
+  "customRules": ["markdownlint-rule-force-align-table-columns"],
   "config": {
     "MD013": false,
     "MD033": false,
