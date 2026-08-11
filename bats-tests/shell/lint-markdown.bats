@@ -26,6 +26,8 @@ teardown() {
   rm -rf "${TEST_TEMP_DIR:?}"
 }
 
+# --- lint mode (default) ---
+
 @test "auto-discovery: omits --config when CONFIG is empty" {
   run env PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
@@ -59,4 +61,41 @@ teardown() {
   run env PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
+}
+
+# --- fix mode ---
+
+@test "fix mode: passes --fix and omits --config when CONFIG is empty" {
+  run env MODE=fix PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  ! echo "$output" | grep -Fqe "--config"
+  echo "$output" | grep -q "markdownlint-cli2 args: --fix \*.md$"
+}
+
+@test "fix mode: passes --config when CONFIG is set" {
+  run env MODE=fix CONFIG=".markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config .markdownlint-cli2.jsonc *.md"
+}
+
+@test "fix mode: splits PATHS on whitespace into separate arguments" {
+  mkdir -p "$TEST_TEMP_DIR/docs"
+  touch "$TEST_TEMP_DIR/docs/readme.md"
+  run env MODE=fix PATHS="*.md docs/*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix *.md docs/*.md"
+}
+
+@test "fix mode: PATHS unset defaults to ." {
+  run env MODE=fix bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 args: --fix \.$"
+}
+
+@test "fix mode: cds to WORKING_DIRECTORY before running" {
+  mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/fixture.md"
+  run env MODE=fix PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 args: --fix \*.md$"
 }

@@ -1,0 +1,38 @@
+name: 'Auto-fix and commit'
+description: 'Runs a fix command and auto-commits any resulting changes with a [skip ci] message. Optional CI safety net for auto-fixing formatting/linting issues.'
+
+inputs:
+  fix-command:
+    description: 'Shell command to run for auto-fixing. Example: pnpm format:fix'
+    required: true
+  working-directory:
+    description: 'Directory to run the fix command in.'
+    required: false
+    default: '.'
+  commit-message:
+    description: 'Commit message for the auto-fix commit. The [skip ci] token prevents the auto-commit from triggering another CI run.'
+    required: false
+    default: 'chore: auto-fix [skip ci]'
+  commit-user-name:
+    description: 'Name for the auto-fix commit author.'
+    required: false
+    default: 'github-actions[bot]'
+  commit-user-email:
+    description: 'Email for the auto-fix commit author.'
+    required: false
+    default: 'github-actions[bot]@users.noreply.github.com'
+
+runs:
+  using: composite
+  steps:
+    - name: Run fix command
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.fix-command }}
+
+    - name: Auto-commit changes
+      uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d
+      with:
+        commit_message: ${{ inputs.commit-message }}
+        commit_user_name: ${{ inputs.commit-user-name }}
+        commit_user_email: ${{ inputs.commit-user-email }}

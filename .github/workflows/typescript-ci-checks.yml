@@ -79,6 +79,10 @@ on:
         required: false
         type: string
         default: ''
+      auto-fix-command:
+        required: false
+        type: string
+        default: ''
 
     secrets:
       codecov-token:
@@ -245,3 +249,25 @@ jobs:
           path: ${{ inputs.working-directory }}
           base-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
           github-token: ${{ github.token }}
+
+  auto-fix:
+    needs: [format, lint]
+    if: ${{ always() && inputs.auto-fix-command != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - *checkout
+      - uses: couimet/github-actions/setup-node-pnpm@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+      - if: inputs.pre-install-command != ''
+        run: ${{ inputs.pre-install-command }}
+      - uses: couimet/github-actions/install-deps@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: couimet/github-actions/auto-fix@main
+        with:
+          fix-command: ${{ inputs.auto-fix-command }}
+          working-directory: ${{ inputs.working-directory }}

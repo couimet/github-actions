@@ -25,6 +25,8 @@ teardown() {
   rm -rf "${TEST_TEMP_DIR:?}"
 }
 
+# --- check mode (default) ---
+
 @test "default inputs: runs prettier --check ." {
   run bash "$SCRIPT"
   [ "$status" -eq 0 ]
@@ -50,4 +52,33 @@ teardown() {
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier pwd: .*/subdir$"
   echo "$output" | grep -q "prettier args: --check .$"
+}
+
+# --- fix mode ---
+
+@test "fix mode: runs prettier --write" {
+  run env MODE=fix bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --write .$"
+}
+
+@test "fix mode: passes --config before paths" {
+  run env MODE=fix CONFIG=".prettierrc.yaml" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --write --config .prettierrc.yaml .$"
+}
+
+@test "fix mode: word-splits PATHS into separate arguments" {
+  run env MODE=fix PATHS="src/ tests/" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --write src/ tests/$"
+}
+
+@test "fix mode: cds to WORKING_DIRECTORY before running" {
+  mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/test.js"
+  run env MODE=fix WORKING_DIRECTORY="subdir" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier pwd: .*/subdir$"
+  echo "$output" | grep -q "prettier args: --write .$"
 }

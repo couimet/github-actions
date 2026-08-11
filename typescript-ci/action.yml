@@ -1,6 +1,10 @@
 name: 'TypeScript CI'
 description: 'One-step CI for TypeScript projects: setup Node.js & pnpm, install deps, format, lint, build, test, and guard versions.'
 inputs:
+  auto-fix-command:
+    description: 'Command to run for auto-fixing. Set to enable auto-fix (e.g. "pnpm format:fix && pnpm lint:fix"). Only runs on pull_request events.'
+    required: false
+    default: ''
   build-command:
     description: 'Command to run for building.'
     required: false
@@ -116,3 +120,10 @@ runs:
         path: ${{ inputs.working-directory }}
         base-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
         github-token: ${{ github.token }}
+
+    - name: Auto-fix
+      if: inputs.auto-fix-command != '' && github.event_name == 'pull_request'
+      uses: couimet/github-actions/auto-fix@main
+      with:
+        fix-command: ${{ inputs.auto-fix-command }}
+        working-directory: ${{ inputs.working-directory }}

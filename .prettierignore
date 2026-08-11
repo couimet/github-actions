@@ -1,3 +1,4 @@
 pnpm-lock.yaml
 tests/coverage/
+tests/fixtures/
 node_modules/
