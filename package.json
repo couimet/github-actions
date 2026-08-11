@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "devDependencies": {
+    "markdownlint-rule-force-align-table-columns": "^0.1.1"
+  }
+}

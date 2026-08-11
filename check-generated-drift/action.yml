@@ -5,6 +5,10 @@ inputs:
   command:
     description: 'Shell command that regenerates generated files (e.g. `pnpm api:types`, `make generate`).'
     required: true
+  post-generate:
+    description: 'Optional shell command to run after the generate command but before drift detection. Use when generation produces non-deterministic output that needs normalization.'
+    required: false
+    default: ''
   working-directory:
     description: 'Directory to run the command in.'
     required: false
@@ -26,6 +30,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         COMMAND: ${{ inputs.command }}
+        POST_GENERATE: ${{ inputs.post-generate }}
       run: bash "${{ github.action_path }}/check.sh"
 
     - name: Post PR comment

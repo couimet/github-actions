@@ -76,6 +76,7 @@ Runs a configurable command (e.g., `pnpm api:types`, `make generate`) and fails 
 | Input               | Required | Default                 | Description                                                                  |
 | ------------------- | -------- | ----------------------- | ---------------------------------------------------------------------------- |
 | `command`           | yes      | (none)                  | Shell command that regenerates generated files.                              |
+| `post-generate`     | no       | (empty)                 | Optional hook that runs after generation but before drift detection.         |
 | `github-token`      | yes      | (none)                  | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN`.           |
 | `header`            | no       | `Generated drift check` | Unique header that identifies the PR comment across re-runs (sticky update). |
 | `working-directory` | no       | `.`                     | Directory to run the command in.                                             |

@@ -19,6 +19,7 @@ setup() {
 
   # Ensure no env vars leak from previous tests
   unset COMMAND
+  unset POST_GENERATE
   unset WORKING_DIRECTORY
 }
 
@@ -75,4 +76,36 @@ teardown() {
   [ -f "$comment_file" ]
   grep -q "Generated drift detected" "$comment_file"
   grep -q "new-untracked-file.txt" "$comment_file"
+}
+
+# T6 — POST_GENERATE hook reverts changes, no drift reported
+@test "POST_GENERATE reverts changes -> no drift, exit 0" {
+  COMMAND='echo "modified" >> tracked-file.txt' \
+    POST_GENERATE='git checkout -- tracked-file.txt' \
+    run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  run cat "$GITHUB_OUTPUT"
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 0 ]
+}
+
+# T7 — POST_GENERATE set but leaves changes, drift still reported
+@test "POST_GENERATE leaves changes -> drift reported" {
+  COMMAND='echo "alpha" >> tracked-file.txt && echo "bravo" > new-file.txt' \
+    POST_GENERATE='rm -f new-file.txt' \
+    run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  grep -q "comment-file=" "$GITHUB_OUTPUT"
+
+  comment_file="$(grep "^comment-file=" "$GITHUB_OUTPUT" | sed 's/^comment-file=//')"
+  [ -f "$comment_file" ]
+  # new-file.txt was reverted by POST_GENERATE, only tracked-file.txt remains
+  grep -q -- '- \`tracked-file.txt\`' "$comment_file"
+  ! grep -q -- '- \`new-file.txt\`' "$comment_file"
+}
+
+# T8 — POST_GENERATE failure propagates
+@test "POST_GENERATE fails -> exit 1" {
+  COMMAND='true' POST_GENERATE='exit 1' run bash "$SCRIPT"
+  [ "$status" -eq 1 ]
 }

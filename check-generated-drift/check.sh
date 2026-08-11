@@ -2,6 +2,7 @@
 set -euo pipefail
 
 COMMAND="${COMMAND:-}"
+POST_GENERATE="${POST_GENERATE:-}"
 WORKING_DIRECTORY="${WORKING_DIRECTORY:-}"
 
 GITHUB_OUTPUT="${GITHUB_OUTPUT:-/dev/null}"
@@ -17,6 +18,10 @@ main() {
   fi
 
   bash -euo pipefail -c "$COMMAND"
+
+  if [[ -n "${POST_GENERATE:-}" ]]; then
+    bash -euo pipefail -c "$POST_GENERATE"
+  fi
 
   local porcelain_output
   porcelain_output="$(git status --porcelain)"

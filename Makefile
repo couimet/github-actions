@@ -30,10 +30,14 @@ lint: install-prereqs lint-md fmt-check lint-sh
 
 lint-fix: install-prereqs lint-md-fix format
 
-lint-md:
+node_modules: package.json
+	npm install --no-audit --no-fund
+	@touch node_modules
+
+lint-md: node_modules
 	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) "**/*.md"
 
-lint-md-fix:
+lint-md-fix: node_modules
 	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION) --fix "**/*.md"
 
 lint-sh:
