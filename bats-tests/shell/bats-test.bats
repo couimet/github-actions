@@ -3,6 +3,7 @@
 load test_helper
 
 SCRIPT="$PROJECT_ROOT/bats-test/run.sh"
+VALIDATE_SCRIPT="$PROJECT_ROOT/bats-test/validate.sh"
 
 setup() {
   TEST_TEMP_DIR="$(mktemp -d)"
@@ -18,9 +19,6 @@ setup() {
   # Default to non-publish so CI's PUBLISH_COMMENT=true env leak doesn't
   # break the non-publish-path tests. Publish-path tests override explicitly.
   export PUBLISH_COMMENT=false
-  # Default token so existing publish-path tests pass. Tests that need
-  # to verify the "no token" error override it with GH_TOKEN="".
-  export GH_TOKEN="fake-test-token"
 }
 
 teardown() {
@@ -232,38 +230,51 @@ EOF
   grep -q 'exit_code=0' "$GITHUB_OUTPUT"
 }
 
-# --- Token validation --------------------------------------------------------
+# --- Validation script ------------------------------------------------------
 
-@test "token validation: fails when publish-comment is true and GH_TOKEN is empty" {
+@test "validation: fails when publish-comment is true and github-token is empty" {
   export PUBLISH_COMMENT=true
-  export GH_TOKEN=""
-  cat > "$TEST_DIR/passing.bats" << 'EOF'
-@test "passing test" { true; }
-EOF
-
-  run bash "$SCRIPT"
+  export GITHUB_TOKEN=""
+  run bash "$VALIDATE_SCRIPT"
   [ "$status" -ne 0 ]
   [[ "$output" =~ "publish-comment is 'true' but github-token is empty" ]]
 }
 
-@test "token validation: succeeds when publish-comment is true and GH_TOKEN is set" {
+@test "validation: succeeds when publish-comment is true and github-token is set" {
   export PUBLISH_COMMENT=true
-  export GH_TOKEN="ghp_fake-token-for-testing"
-  cat > "$TEST_DIR/passing.bats" << 'EOF'
-@test "passing test" { true; }
-EOF
-
-  run bash "$SCRIPT"
+  export GITHUB_TOKEN="ghp_fake-token-for-testing"
+  run bash "$VALIDATE_SCRIPT"
   [ "$status" -eq 0 ]
+  [ -z "$output" ]
 }
 
-@test "token validation: no-op when publish-comment is false and GH_TOKEN is empty" {
+@test "validation: succeeds when publish-comment is false and github-token is empty" {
   export PUBLISH_COMMENT=false
-  export GH_TOKEN=""
-  cat > "$TEST_DIR/passing.bats" << 'EOF'
-@test "passing test" { true; }
-EOF
-
-  run bash "$SCRIPT"
+  export GITHUB_TOKEN=""
+  run bash "$VALIDATE_SCRIPT"
   [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "validation: succeeds when publish-comment is false and github-token is set" {
+  export PUBLISH_COMMENT=false
+  export GITHUB_TOKEN="ghp_fake-token-for-testing"
+  run bash "$VALIDATE_SCRIPT"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+# --- action.yml wiring ------------------------------------------------------
+
+@test "action.yml: Run BATS step env does not expose the GitHub token" {
+  run sed -n '/- name: Run BATS/,/run: bash/p' "$PROJECT_ROOT/bats-test/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"GH_TOKEN"* ]]
+  [[ "$output" != *"github-token"* ]]
+}
+
+@test "action.yml: validation step is gated on publish-comment and empty github-token" {
+  run sed -n '/- name: Validate publish inputs/,/run: bash/p' "$PROJECT_ROOT/bats-test/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"inputs.publish-comment == 'true' && inputs.github-token == ''"* ]]
 }

@@ -63,6 +63,14 @@ runs:
         file-install: ${{ inputs.file-install }}
         detik-install: ${{ inputs.detik-install }}
 
+    - name: Validate publish inputs
+      if: inputs.publish-comment == 'true' && inputs.github-token == ''
+      shell: bash
+      env:
+        PUBLISH_COMMENT: ${{ inputs.publish-comment }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: bash "${{ github.action_path }}/validate.sh"
+
     - name: Run BATS
       id: bats-run
       shell: bash
@@ -71,7 +79,6 @@ runs:
         FORMATTER: ${{ inputs.formatter }}
         RECURSIVE: ${{ inputs.recursive }}
         PUBLISH_COMMENT: ${{ inputs.publish-comment }}
-        GH_TOKEN: ${{ inputs.github-token }}
       run: bash "${{ github.action_path }}/run.sh"
 
     - name: Publish BATS test results
