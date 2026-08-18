@@ -12,7 +12,7 @@ Listed alphabetically.
 
 Runs a fix command (e.g., `pnpm format:fix && pnpm lint:fix`) and auto-commits any resulting changes. Thin wrapper around [stefanzweifel/git-auto-commit-action](https://github.com/stefanzweifel/git-auto-commit-action) pinned to a commit SHA, so consuming repos avoid duplicating the pin. The default commit message (`chore: auto-fix [skip ci]`) includes the `[skip ci]` token, which prevents the auto-commit from triggering another CI run — without it, the fix commit would re-trigger the pipeline and risk an infinite CI loop. Keep the `[skip ci]` token in the message when overriding `commit-message`; dropping it only re-triggers CI when the workflow is called with the `auto-fix-token` secret. The workflow's recursion guard matches the head commit subject against the configured message, so keep the message a single line, and keep the fix command idempotent as a backstop.
 
-The consuming workflow's job needs `contents: write` in its `permissions:` block.
+The consuming workflow's job needs `contents: write` in its `permissions:` block. On `pull_request` events, the caller must check out the PR head ref with `persist-credentials: true` so the auto-fix commit can be pushed instead of failing on a detached HEAD.
 
 | Input               | Required | Default                                        | Description                                                                                                                                                                                                                                                           |
 | ------------------- | -------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,6 +29,7 @@ steps:
   - uses: actions/checkout@v4
     with:
       persist-credentials: true
+      ref: ${{ github.event.pull_request.head.ref }}
   - uses: couimet/github-actions/setup-node-pnpm@main
   - uses: couimet/github-actions/install-deps@main
   - uses: couimet/github-actions/auto-fix@main
@@ -261,6 +262,25 @@ steps:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+### `detect-auto-fix-commit`
+
+Outputs whether the head commit subject matches a configured auto-fix commit message. This is the recursion guard the `typescript-ci-checks` workflow uses to skip its own fix commits: read `outputs.is-auto-fix` and skip the auto-fix step when it is `'true'`.
+
+| Input            | Required | Default | Description                                               |
+| ---------------- | -------- | ------- | --------------------------------------------------------- |
+| `commit-message` | yes      | (none)  | Commit subject that marks a commit as an auto-fix commit. |
+
+`outputs.is-auto-fix` is `'true'` when the latest commit subject matches `commit-message`.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: couimet/github-actions/detect-auto-fix-commit@main
+    id: guard
+    with:
+      commit-message: 'chore: auto-fix [skip ci]'
+```
+
 ### `format`
 
 Runs a format command. Defaults to `pnpm format`; override `command` for non-pnpm projects (e.g., `command: make fmt`). The step fails if any file needs formatting.
@@ -487,21 +507,21 @@ One-step CI for TypeScript projects. Bundles frequently-used CI steps into a sin
 
 The `coverage-comment` step posts a PR comment with Jest coverage summaries and optional test stats. It only runs on `pull_request` events. The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
-When `auto-fix-command` is set, an auto-fix step runs after format and lint and commits the fixes back to the branch. It only runs on `pull_request` events, and the job needs `contents: write` in its `permissions:` block.
+When `auto-fix-command` is set, an auto-fix step runs after format and lint and commits the fixes back to the branch. The consuming job must check out the PR head ref with `persist-credentials: true` and grant `contents: write` in its `permissions:` block. The step only runs on same-repository `pull_request` events, so fork PRs are skipped.
 
-| Input                      | Required | Default          | Description                                                                                                                                                                                                                                       |
-| -------------------------- | -------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auto-fix-command`         | no       | (empty)          | Command to run for auto-fixing after format and lint (e.g., `pnpm format:fix && pnpm lint:fix`). When empty (the default), auto-fix is disabled; when set, runs an auto-fix step on `pull_request` events. Requires `contents: write` on the job. |
-| `build-command`            | no       | `pnpm build`     | Command to run for building.                                                                                                                                                                                                                      |
-| `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.                                                                                                                                                                            |
-| `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                                                                                                                  |
-| `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job.                                                                                                                                        |
-| `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                                                                                                                                                                                    |
-| `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                                                                                                                                                             |
-| `lint-command`             | no       | `pnpm lint`      | Command to run for linting.                                                                                                                                                                                                                       |
-| `node-version`             | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                                                                                                                                                                     |
-| `test-command`             | no       | `pnpm test`      | Command to run for testing.                                                                                                                                                                                                                       |
-| `working-directory`        | no       | `.`              | Directory containing `package.json`.                                                                                                                                                                                                              |
+| Input                      | Required | Default          | Description                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | -------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto-fix-command`         | no       | (empty)          | Command to run for auto-fixing after format and lint (e.g., `pnpm format:fix && pnpm lint:fix`). When empty (the default), auto-fix is disabled; when set, runs an auto-fix step on same-repository `pull_request` events. Requires the PR head ref checked out with `persist-credentials: true` and `contents: write`; fork PRs are skipped. |
+| `build-command`            | no       | `pnpm build`     | Command to run for building.                                                                                                                                                                                                                                                                                                                  |
+| `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.                                                                                                                                                                                                                                                                        |
+| `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                                                                                                                                                                                                              |
+| `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job.                                                                                                                                                                                                                                    |
+| `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                                                                                                                                                                                                                                                                                |
+| `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                                                                                                                                                                                                                                                         |
+| `lint-command`             | no       | `pnpm lint`      | Command to run for linting.                                                                                                                                                                                                                                                                                                                   |
+| `node-version`             | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                                                                                                                                                                                                                                                                 |
+| `test-command`             | no       | `pnpm test`      | Command to run for testing.                                                                                                                                                                                                                                                                                                                   |
+| `working-directory`        | no       | `.`              | Directory containing `package.json`.                                                                                                                                                                                                                                                                                                          |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -511,6 +531,19 @@ steps:
     with:
       persist-credentials: false
   - uses: couimet/github-actions/typescript-ci@main
+```
+
+To enable auto-fix, check out the PR head ref with persisted credentials (the job needs `permissions: contents: write`):
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: true
+      ref: ${{ github.event.pull_request.head.ref }}
+  - uses: couimet/github-actions/typescript-ci@main
+    with:
+      auto-fix-command: pnpm format:fix && pnpm lint:fix
 ```
 
 For Turborepo monorepos, define root-level pnpm scripts that match the defaults so no overrides are needed (as done in `ts-npm-packages`):

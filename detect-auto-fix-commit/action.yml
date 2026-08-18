@@ -1,0 +1,22 @@
+name: 'Detect auto-fix commit'
+description: 'Outputs whether the head commit is an auto-fix commit by comparing the latest commit subject with a configured message. Used as the recursion guard for the auto-fix job in the typescript-ci-checks workflow.'
+
+inputs:
+  commit-message:
+    description: 'Commit subject that marks a commit as an auto-fix commit.'
+    required: true
+
+outputs:
+  is-auto-fix:
+    description: 'true when the latest commit subject matches commit-message.'
+    value: ${{ steps.detect.outputs.is-auto-fix }}
+
+runs:
+  using: composite
+  steps:
+    - name: Detect auto-fix commit
+      id: detect
+      shell: bash
+      env:
+        AUTO_FIX_COMMIT_MESSAGE: ${{ inputs.commit-message }}
+      run: bash "${{ github.action_path }}/detect.sh"

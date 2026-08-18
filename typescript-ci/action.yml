@@ -2,7 +2,7 @@ name: 'TypeScript CI'
 description: 'One-step CI for TypeScript projects: setup Node.js & pnpm, install deps, format, lint, build, test, and guard versions.'
 inputs:
   auto-fix-command:
-    description: 'Command to run for auto-fixing. Set to enable auto-fix (e.g. "pnpm format:fix && pnpm lint:fix"). Only runs on pull_request events.'
+    description: 'Command to run for auto-fixing. Set to enable auto-fix (e.g. "pnpm format:fix && pnpm lint:fix"). Only runs on pull_request events from the same repository (fork PRs are skipped); the consuming job must check out the PR head ref (ref: ${{ github.event.pull_request.head.ref }}) with persist-credentials: true and grant contents: write, otherwise the auto-fix push cannot succeed.'
     required: false
     default: ''
   build-command:
@@ -122,7 +122,7 @@ runs:
         github-token: ${{ github.token }}
 
     - name: Auto-fix
-      if: failure() && inputs.auto-fix-command != '' && github.event_name == 'pull_request'
+      if: failure() && inputs.auto-fix-command != '' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       uses: couimet/github-actions/auto-fix@main
       with:
         fix-command: ${{ inputs.auto-fix-command }}

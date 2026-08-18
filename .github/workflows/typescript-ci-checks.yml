@@ -271,9 +271,9 @@ jobs:
           token: ${{ secrets.auto-fix-token || github.token }}
       - name: Detect auto-fix commit
         id: guard
-        env:
-          AUTO_FIX_COMMIT_MESSAGE: ${{ inputs.auto-fix-commit-message }}
-        run: 'echo "is-auto-fix=$(test "$(git log -1 --format=%s)" = "$AUTO_FIX_COMMIT_MESSAGE" && echo true || echo false)" >> "$GITHUB_OUTPUT"'
+        uses: couimet/github-actions/detect-auto-fix-commit@main
+        with:
+          commit-message: ${{ inputs.auto-fix-commit-message }}
       - if: steps.guard.outputs.is-auto-fix != 'true'
         uses: couimet/github-actions/setup-node-pnpm@main
         with:

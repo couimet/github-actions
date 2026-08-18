@@ -154,6 +154,11 @@ jobs:
         with:
           fix-command: 'true'
 
+      - name: Test detect-auto-fix-commit action
+        uses: ./detect-auto-fix-commit
+        with:
+          commit-message: 'chore: auto-fix [skip ci]'
+
       - name: Test check-todos action
         uses: ./check-todos
         with:
