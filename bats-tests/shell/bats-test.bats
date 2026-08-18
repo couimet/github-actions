@@ -270,6 +270,7 @@ EOF
   run sed -n '/- name: Run BATS/,/run: bash/p' "$PROJECT_ROOT/bats-test/action.yml"
   [ "$status" -eq 0 ]
   [[ "$output" != *"GH_TOKEN"* ]]
+  [[ "$output" != *"GITHUB_TOKEN"* ]]
   [[ "$output" != *"github-token"* ]]
 }
 
@@ -277,4 +278,7 @@ EOF
   run sed -n '/- name: Validate publish inputs/,/run: bash/p' "$PROJECT_ROOT/bats-test/action.yml"
   [ "$status" -eq 0 ]
   [[ "$output" == *"inputs.publish-comment == 'true' && inputs.github-token == ''"* ]]
+  [[ "$output" == *'PUBLISH_COMMENT: ${{ inputs.publish-comment }}'* ]]
+  [[ "$output" == *'GITHUB_TOKEN: ${{ inputs.github-token }}'* ]]
+  [[ "$output" == *'bash "${{ github.action_path }}/validate.sh"'* ]]
 }
