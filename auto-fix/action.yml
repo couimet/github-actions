@@ -27,8 +27,10 @@ runs:
   steps:
     - name: Run fix command
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: ${{ inputs.fix-command }}
+      env:
+        FIX_COMMAND: ${{ inputs.fix-command }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      run: bash "${{ github.action_path }}/fix.sh"
 
     - name: Auto-commit changes
       uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d
