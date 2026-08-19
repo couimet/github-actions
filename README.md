@@ -387,16 +387,17 @@ steps:
 
 ### `request-coderabbit-full-review`
 
-Posts a `@coderabbitai full review` comment on a pull request to trigger a fresh CodeRabbit full review. Companion action for the `rabbit-maximizer-restacker` workflow, also usable standalone. The action uses the run's `github.token`; override `GITHUB_TOKEN` as a step-level env var to use a different token (e.g. for cross-repo comments).
+Posts a `@coderabbitai full review` comment on a pull request to trigger a fresh CodeRabbit full review. Companion action for the `rabbit-maximizer-restacker` workflow, also usable standalone. The action posts with the run's `github.token` by default; pass a PAT via the `github-token` input to post on another repository.
 
 The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
-| Input       | Required | Default      | Description                                                                                                                               |
-| ----------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `repo`      | no       | current repo | Repository to post the comment on (`owner/repo`). Defaults to the current repository.                                                     |
-| `pr-number` | yes      | (none)       | Pull request number to post the review request on.                                                                                        |
-| `trigger`   | no       | `workflow`   | What triggered this review request (e.g., `rabbit-maximizer-restacker`, `workflow-dispatch`). Included in comment metadata for debugging. |
-| `metadata`  | no       | `{}`         | Additional JSON-serializable metadata to include in the comment. Merged into the hidden metadata block.                                   |
+| Input          | Required | Default              | Description                                                                                                                               |
+| -------------- | -------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token` | no       | run's `github.token` | GitHub token for posting the review request comment. Pass a PAT when targeting another repository.                                        |
+| `repo`         | no       | current repo         | Repository to post the comment on (`owner/repo`). Defaults to the current repository.                                                     |
+| `pr-number`    | yes      | (none)               | Pull request number to post the review request on.                                                                                        |
+| `trigger`      | no       | `workflow`           | What triggered this review request (e.g., `rabbit-maximizer-restacker`, `workflow-dispatch`). Included in comment metadata for debugging. |
+| `metadata`     | no       | `{}`                 | Additional JSON object metadata to include in the comment. Merged into the hidden metadata block.                                         |
 
 | Output       | Description                                    |
 | ------------ | ---------------------------------------------- |
@@ -565,7 +566,7 @@ Reusable workflow that requests a fresh CodeRabbit full review when a PR's base 
 
 The job runs only when the event payload has `changes.base` (base was edited) and the PR's new base is `main`; otherwise it skips.
 
-The calling job must grant `contents: read` and `pull-requests: write` (the action posts with the run's `github.token`).
+The calling job must grant `pull-requests: write` (the action posts with the run's `github.token`).
 
 ```yaml
 on:
@@ -575,7 +576,6 @@ on:
 jobs:
   restack:
     permissions:
-      contents: read
       pull-requests: write
     uses: couimet/github-actions/.github/workflows/rabbit-maximizer-restacker.yml@main
 ```

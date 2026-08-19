@@ -30,7 +30,11 @@ main() {
     --arg trigger "$trigger" \
     --arg timestamp "$timestamp" \
     --argjson extra "$metadata" \
-    '{trigger: $trigger, timestamp: $timestamp} + $extra')"
+    'if ($extra | type) != "object" then
+       error("METADATA must be a JSON object")
+     else
+       {trigger: $trigger, timestamp: $timestamp} + $extra
+     end')"
 
   local comment_body
   comment_body="$(

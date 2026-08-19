@@ -4,6 +4,10 @@ load test_helper
 
 SCRIPT="$PROJECT_ROOT/request-coderabbit-full-review/request-coderabbit-full-review.sh"
 
+# This action is not live self-tested in ci.yml: a live run posts a
+# @coderabbitai comment that triggers a real CodeRabbit full review on this
+# repo's PRs. Script logic is covered here by BATS instead.
+
 setup() {
   TEST_TEMP_DIR="$(mktemp -d)"
   export TEST_TEMP_DIR
@@ -79,4 +83,24 @@ teardown() {
   [ "$status" -eq 0 ]
   grep -q '"trigger"' "$GH_LOG"
   grep -q '"workflow"' "$GH_LOG"
+}
+
+# T6 — scalar METADATA fails with a clear error
+@test "scalar METADATA fails" {
+  export REPO="my-org/my-repo"
+  export PR_NUMBER=42
+  export METADATA='42'
+  run bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q 'METADATA must be a JSON object'
+}
+
+# T7 — array METADATA fails with a clear error
+@test "array METADATA fails" {
+  export REPO="my-org/my-repo"
+  export PR_NUMBER=42
+  export METADATA='["a","b"]'
+  run bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q 'METADATA must be a JSON object'
 }

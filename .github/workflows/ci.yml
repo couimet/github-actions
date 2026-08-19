@@ -134,16 +134,6 @@ jobs:
           working-directory: tests
           coverage-summary-path: coverage/coverage-summary.json
 
-      - name: Test request-coderabbit-full-review action
-        # Disabled: a live run posts a @coderabbitai comment that triggers a
-        # real CodeRabbit full review on this repo's PRs. Script logic is
-        # covered by bats-tests/shell/request-coderabbit-full-review.bats.
-        if: false
-        uses: ./request-coderabbit-full-review
-        with:
-          pr-number: ${{ github.event.pull_request.number }}
-          trigger: self-test
-
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
@@ -176,6 +166,5 @@ jobs:
   self-test-rabbit-maximizer-restacker:
     name: Self-test rabbit-maximizer-restacker workflow
     permissions:
-      contents: read
       pull-requests: write
     uses: ./.github/workflows/rabbit-maximizer-restacker.yml
