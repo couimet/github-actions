@@ -411,12 +411,12 @@ steps:
 
 Lints shell scripts with [shellcheck](https://www.shellcheck.net/) (preinstalled on GitHub-hosted Ubuntu runners). Scripts are discovered via `find` with configurable extensions and exclusions. The step fails on any lint error.
 
-| Input        | Required | Default                                   | Description                                                |
-| ------------ | -------- | ----------------------------------------- | ---------------------------------------------------------- |
-| `exclude`    | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.   |
-| `extensions` | no       | `sh bash`                                 | Space-separated file extensions to lint.                   |
-| `paths`      | no       | `.`                                       | Root to search for shell scripts.                          |
-| `severity`   | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`). |
+| Input        | Required | Default                                   | Description                                                                                  |
+| ------------ | -------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `exclude`    | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.                                     |
+| `extensions` | no       | `sh bash`                                 | Space-separated file extensions to lint. An empty value lints all regular files under paths. |
+| `paths`      | no       | `.`                                       | Root to search for shell scripts.                                                            |
+| `severity`   | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`).                                   |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
