@@ -9,6 +9,12 @@ set -euo pipefail
 
 CI_YML_PATH="${CI_YML_PATH:-.github/workflows/ci.yml}"
 
+# Actions that cannot be live self-tested in the CI workflow. A live run of
+# request-coderabbit-full-review posts a @coderabbitai comment that triggers a
+# real CodeRabbit full review on this repo's PRs; its script logic is covered
+# by bats-tests/shell/request-coderabbit-full-review.bats instead.
+SELF_TEST_EXCLUDED_DIRS="${SELF_TEST_EXCLUDED_DIRS:-request-coderabbit-full-review}"
+
 if [[ ! -f "$CI_YML_PATH" ]]; then
   echo "::error::CI workflow file not found: ${CI_YML_PATH}"
   exit 1
@@ -27,6 +33,10 @@ while IFS= read -r action_yml; do
   dir="$(basename "$(dirname "$action_yml")")"
   # Skip action.yml at repo root (not a top-level action directory)
   [[ "$dir" == "." ]] && continue
+  # Skip dirs that are intentionally not live self-tested.
+  if [[ " ${SELF_TEST_EXCLUDED_DIRS} " == *" ${dir} "* ]]; then
+    continue
+  fi
   # Anchored grep: \. escapes the dot, ([[:space:]]|@|$) prevents
   # prefix collisions (e.g. ./setup-node matching ./setup-node-pnpm).
   if ! grep -qE "uses: \./${dir}([[:space:]]|@|$)" "$CI_YML_PATH"; then

@@ -207,3 +207,9 @@ jobs:
       lint: 'echo "lint passed"'
       build: 'echo "build passed"'
       test: 'echo "test passed"'
+
+  self-test-rabbit-maximizer-restacker:
+    name: Self-test rabbit-maximizer-restacker workflow
+    permissions:
+      pull-requests: write
+    uses: ./.github/workflows/rabbit-maximizer-restacker.yml

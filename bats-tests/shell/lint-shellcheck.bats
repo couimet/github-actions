@@ -47,6 +47,18 @@ teardown() {
   ! echo "$output" | grep -q "helper.bash"
 }
 
+@test "empty extensions: lints all regular files, honors excludes" {
+  touch "$TEST_TEMP_DIR/script.sh" "$TEST_TEMP_DIR/extensionless-script"
+  mkdir -p "$TEST_TEMP_DIR/node_modules/pkg"
+  touch "$TEST_TEMP_DIR/node_modules/pkg/other.sh"
+
+  run env EXTENSIONS="" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "script.sh"
+  echo "$output" | grep -q "extensionless-script"
+  ! echo "$output" | grep -q "other.sh"
+}
+
 @test "custom exclude: excludes user-specified path fragments" {
   touch "$TEST_TEMP_DIR/script.sh"
   mkdir -p "$TEST_TEMP_DIR/vendor/lib"

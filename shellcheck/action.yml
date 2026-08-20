@@ -6,7 +6,7 @@ inputs:
     required: false
     default: '.claude-work .history node_modules .git'
   extensions:
-    description: 'Space-separated file extensions to lint.'
+    description: 'Space-separated file extensions to lint. An empty value lints all regular files under paths.'
     required: false
     default: 'sh bash'
   paths:
