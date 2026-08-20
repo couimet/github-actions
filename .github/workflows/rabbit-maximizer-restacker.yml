@@ -16,4 +16,4 @@ jobs:
         with:
           pr-number: ${{ github.event.pull_request.number }}
           trigger: base-changed-to-main
-          metadata: '{"previous_base": "${{ github.event.changes.base.ref.from }}"}'
+          metadata: '{"previous_base": ${{ toJSON(github.event.changes.base.ref.from) }}}'

@@ -414,7 +414,7 @@ steps:
       trigger: base-changed-to-main
       metadata: |
         {
-          "previous_base": "${{ github.event.changes.base.ref.from }}"
+          "previous_base": ${{ toJSON(github.event.changes.base.ref.from) }}
         }
 ```
 
