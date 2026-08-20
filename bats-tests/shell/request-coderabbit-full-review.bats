@@ -12,13 +12,15 @@ setup() {
   TEST_TEMP_DIR="$(mktemp -d)"
   export TEST_TEMP_DIR
 
-  # Fake gh: log its arguments to GH_LOG and print the comment id that real
-  # gh would extract via --jq '.id'.
+  # Fake gh: log its arguments (and GITHUB_TOKEN, mirroring the env the action
+  # passes through) to GH_LOG and print the comment id that real gh would
+  # extract via --jq '.id'.
   GH_LOG="$TEST_TEMP_DIR/gh.log"
   export GH_LOG
   cat >"$TEST_TEMP_DIR/gh" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$GH_LOG"
+printf 'GITHUB_TOKEN=%s\n' "$GITHUB_TOKEN" >>"$GH_LOG"
 printf '42\n'
 EOF
   chmod +x "$TEST_TEMP_DIR/gh"
@@ -103,4 +105,38 @@ teardown() {
   run bash "$SCRIPT"
   [ "$status" -ne 0 ]
   echo "$output" | grep -q 'METADATA must be a JSON object'
+}
+
+# T8 — generated trigger/timestamp override user-supplied METADATA values
+@test "generated trigger and timestamp override METADATA values" {
+  export REPO="my-org/my-repo"
+  export PR_NUMBER=42
+  export METADATA='{"trigger":"malicious","timestamp":"2000-01-01T00:00:00Z"}'
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  grep -qE '"trigger"[[:space:]]*:[[:space:]]*"workflow"' "$GH_LOG"
+  ! grep -q 'malicious' "$GH_LOG"
+  ! grep -q '2000-01-01T00:00:00Z' "$GH_LOG"
+}
+
+# T9 — GITHUB_TOKEN is passed through to gh
+@test "GITHUB_TOKEN passed through to gh" {
+  export REPO="my-org/my-repo"
+  export PR_NUMBER=42
+  export GITHUB_TOKEN="ghp_test-pat-token"
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  grep -q 'ghp_test-pat-token' "$GH_LOG"
+}
+
+# T10 — action.yml wires the token fallback, script invocation, and empty default
+@test "action.yml: token fallback, script invocation, and github-token default" {
+  run sed -n '/- name: Request CodeRabbit full review/,/run: bash/p' "$PROJECT_ROOT/request-coderabbit-full-review/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'GITHUB_TOKEN: ${{ inputs.github-token || github.token }}'* ]]
+  [[ "$output" == *'bash "${{ github.action_path }}/request-coderabbit-full-review.sh"'* ]]
+
+  run sed -n '/github-token:/,/default:/p' "$PROJECT_ROOT/request-coderabbit-full-review/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"default: ''"* ]]
 }

@@ -391,13 +391,13 @@ Posts a `@coderabbitai full review` comment on a pull request to trigger a fresh
 
 The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
-| Input          | Required | Default              | Description                                                                                                                               |
-| -------------- | -------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `github-token` | no       | run's `github.token` | GitHub token for posting the review request comment. Pass a PAT when targeting another repository.                                        |
-| `repo`         | no       | current repo         | Repository to post the comment on (`owner/repo`). Defaults to the current repository.                                                     |
-| `pr-number`    | yes      | (none)               | Pull request number to post the review request on.                                                                                        |
-| `trigger`      | no       | `workflow`           | What triggered this review request (e.g., `rabbit-maximizer-restacker`, `workflow-dispatch`). Included in comment metadata for debugging. |
-| `metadata`     | no       | `{}`                 | Additional JSON object metadata to include in the comment. Merged into the hidden metadata block.                                         |
+| Input          | Required | Default              | Description                                                                                                                                                                           |
+| -------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token` | no       | run's `github.token` | GitHub token for posting the review request comment. Pass a PAT when targeting another repository.                                                                                    |
+| `repo`         | no       | current repo         | Repository to post the comment on (`owner/repo`). Defaults to the current repository.                                                                                                 |
+| `pr-number`    | yes      | (none)               | Pull request number to post the review request on.                                                                                                                                    |
+| `trigger`      | no       | `workflow`           | What triggered this review request (e.g., `rabbit-maximizer-restacker`, `workflow-dispatch`). Included in comment metadata for debugging.                                             |
+| `metadata`     | no       | `{}`                 | Additional JSON object metadata to include in the comment. Merged into the hidden metadata block. `trigger`/`timestamp` keys in `metadata` are overridden by the action's own values. |
 
 | Output       | Description                                    |
 | ------------ | ---------------------------------------------- |

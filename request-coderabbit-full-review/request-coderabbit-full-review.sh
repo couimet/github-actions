@@ -33,7 +33,7 @@ main() {
     'if ($extra | type) != "object" then
        error("METADATA must be a JSON object")
      else
-       {trigger: $trigger, timestamp: $timestamp} + $extra
+       $extra + {trigger: $trigger, timestamp: $timestamp}
      end')"
 
   local comment_body
