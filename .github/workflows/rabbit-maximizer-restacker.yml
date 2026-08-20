@@ -1,0 +1,19 @@
+name: rabbit-maximizer-restacker
+
+on:
+  workflow_call:
+
+permissions:
+  pull-requests: write
+
+jobs:
+  restack:
+    if: github.event.changes.base != null && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request CodeRabbit full review
+        uses: couimet/github-actions/request-coderabbit-full-review@main
+        with:
+          pr-number: ${{ github.event.pull_request.number }}
+          trigger: base-changed-to-main
+          metadata: '{"previous_base": ${{ toJSON(github.event.changes.base.ref.from) }}}'

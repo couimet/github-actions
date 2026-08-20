@@ -57,3 +57,14 @@ EOF
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "has no 'uses: ./setup-node' reference"
 }
+
+@test "excluded action dir is skipped" {
+  mkdir -p "$TEST_TEMP_DIR/foo" "$TEST_TEMP_DIR/bar"
+  touch "$TEST_TEMP_DIR/foo/action.yml" "$TEST_TEMP_DIR/bar/action.yml"
+  cat > "$TEST_TEMP_DIR/ci.yml" <<'EOF'
+steps:
+  - uses: ./bar
+EOF
+  run bash -c "cd '$TEST_TEMP_DIR' && CI_YML_PATH=ci.yml SELF_TEST_EXCLUDED_DIRS=foo bash '$SCRIPT'"
+  [ "$status" -eq 0 ]
+}

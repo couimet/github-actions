@@ -385,6 +385,39 @@ steps:
       comment-file: /tmp/comment-body.md
 ```
 
+### `request-coderabbit-full-review`
+
+Posts a `@coderabbitai full review` comment on a pull request to trigger a fresh CodeRabbit full review. Companion action for the `rabbit-maximizer-restacker` workflow, also usable standalone. The action posts with the run's `github.token` by default; pass a PAT via the `github-token` input to post on another repository.
+
+The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
+
+| Input          | Required | Default              | Description                                                                                                                                                                           |
+| -------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token` | no       | run's `github.token` | GitHub token for posting the review request comment. Pass a PAT when targeting another repository.                                                                                    |
+| `repo`         | no       | current repo         | Repository to post the comment on (`owner/repo`). Defaults to the current repository.                                                                                                 |
+| `pr-number`    | yes      | (none)               | Pull request number to post the review request on.                                                                                                                                    |
+| `trigger`      | no       | `workflow`           | What triggered this review request (e.g., `rabbit-maximizer-restacker`, `workflow-dispatch`). Included in comment metadata for debugging.                                             |
+| `metadata`     | no       | `{}`                 | Additional JSON object metadata to include in the comment. Merged into the hidden metadata block. `trigger`/`timestamp` keys in `metadata` are overridden by the action's own values. |
+
+| Output       | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `comment-id` | GitHub comment ID of the posted review request |
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/request-coderabbit-full-review@main
+    with:
+      pr-number: ${{ github.event.pull_request.number }}
+      trigger: base-changed-to-main
+      metadata: |
+        {
+          "previous_base": ${{ toJSON(github.event.changes.base.ref.from) }}
+        }
+```
+
 ### `setup-node-pnpm`
 
 Installs Node.js (reading the version from the consuming repo's `.nvmrc` unless overridden) and activates pnpm via Corepack from the consuming repo's `package.json` `packageManager` field.
@@ -526,6 +559,28 @@ steps:
 ## Available workflows
 
 Listed alphabetically.
+
+### `rabbit-maximizer-restacker`
+
+Reusable workflow that requests a fresh CodeRabbit full review when a PR's base branch changes to `main`. Incubated in [couimet/rabbit-maximizer](https://github.com/couimet/rabbit-maximizer); the caller keeps the `pull_request_target` trigger.
+
+The job runs only when the event payload has `changes.base` (base was edited) and the PR's new base is `main`; otherwise it skips.
+
+The calling job must grant `pull-requests: write` (the action posts with the run's `github.token`).
+
+```yaml
+on:
+  pull_request_target:
+    types: [edited]
+
+jobs:
+  restack:
+    permissions:
+      pull-requests: write
+    uses: couimet/github-actions/.github/workflows/rabbit-maximizer-restacker.yml@main
+```
+
+The workflow takes no inputs or secrets; it reads `github.event.pull_request.number` and `github.event.changes.base.ref.from` from the caller's event context.
 
 ### `typescript-ci-checks`
 
