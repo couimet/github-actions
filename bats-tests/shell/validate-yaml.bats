@@ -8,16 +8,20 @@ VALIDATE="$ACTION_DIR/validate.sh"
 SCHEMA="$FIXTURES/valid.schema.json"
 VALID="$FIXTURES/valid.yml"
 INVALID="$FIXTURES/invalid-missing-context.yml"
+MALFORMED="$FIXTURES/malformed.yml"
 
 setup() {
   TEST_TEMP_DIR="$(mktemp -d)"
   export TEST_TEMP_DIR
+  GITHUB_OUTPUT="$(mktemp)"
+  export GITHUB_OUTPUT
   cd "$ACTION_DIR"
   uv sync --locked --quiet
 }
 
 teardown() {
   rm -rf "${TEST_TEMP_DIR:?}"
+  rm -f "${GITHUB_OUTPUT:?}"
 }
 
 @test "valid YAML file passes validation" {
@@ -30,6 +34,48 @@ teardown() {
   run uv run --locked "$VALIDATE" "$SCHEMA" "$INVALID"
   [ "$status" -eq 1 ]
   [[ "$output" == *"ERROR:"* ]]
+}
+
+@test "malformed YAML file fails with clean error" {
+  run uv run --locked "$VALIDATE" "$SCHEMA" "$MALFORMED"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR:"* ]]
+  [[ "$output" != *"Traceback"* ]]
+}
+
+@test "messages use repo-relative path under GITHUB_WORKSPACE" {
+  export GITHUB_WORKSPACE="$PROJECT_ROOT"
+  run uv run --locked "$VALIDATE" "$SCHEMA" "$VALID"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OK: validate-yaml/tests/fixtures/valid.yml"* ]]
+
+  run uv run --locked "$VALIDATE" "$SCHEMA" "$INVALID"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: validate-yaml/tests/fixtures/invalid-missing-context.yml"* ]]
+}
+
+@test "schema violation writes comment file" {
+  run uv run --locked "$VALIDATE" "$SCHEMA" "$INVALID"
+  [ "$status" -eq 1 ]
+  grep -q "^comment-file=" "$GITHUB_OUTPUT"
+  comment_file="$(grep "^comment-file=" "$GITHUB_OUTPUT" | sed 's/^comment-file=//')"
+  [ -f "$comment_file" ]
+  grep -q "ERROR:" "$comment_file"
+}
+
+@test "malformed YAML writes comment file" {
+  run uv run --locked "$VALIDATE" "$SCHEMA" "$MALFORMED"
+  [ "$status" -eq 1 ]
+  grep -q "^comment-file=" "$GITHUB_OUTPUT"
+  comment_file="$(grep "^comment-file=" "$GITHUB_OUTPUT" | sed 's/^comment-file=//')"
+  [ -f "$comment_file" ]
+  grep -q "ERROR:" "$comment_file"
+}
+
+@test "valid run writes no comment file" {
+  run uv run --locked "$VALIDATE" "$SCHEMA" "$VALID"
+  [ "$status" -eq 0 ]
+  ! grep -q "^comment-file=" "$GITHUB_OUTPUT"
 }
 
 @test "missing schema argument fails" {
