@@ -30,10 +30,7 @@ runs:
       env:
         SCHEMA: ${{ inputs.schema }}
         FILE: ${{ inputs.file }}
-      run: |
-        cd "${{ github.action_path }}"
-        uv sync --locked
-        uv run --locked ./validate.sh "$GITHUB_WORKSPACE/$SCHEMA" "$GITHUB_WORKSPACE/$FILE"
+      run: bash "${{ github.action_path }}/run.sh"
 
     - name: Post PR comment
       if: steps.validate.outputs.comment-file != '' && inputs.github-token != '' && github.event.pull_request != null

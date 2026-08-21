@@ -101,3 +101,27 @@ teardown() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"YAML file not found"* ]]
 }
+
+@test "run.sh wrapper validates a repo-relative file" {
+  export GITHUB_ACTION_PATH="$ACTION_DIR"
+  export GITHUB_WORKSPACE="$PROJECT_ROOT"
+  export SCHEMA="validate-yaml/tests/fixtures/valid.schema.json"
+  export FILE="validate-yaml/tests/fixtures/valid.yml"
+  run bash "$ACTION_DIR/run.sh"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OK:"* ]]
+}
+
+@test "run.sh wrapper fails with comment file on malformed YAML" {
+  export GITHUB_ACTION_PATH="$ACTION_DIR"
+  export GITHUB_WORKSPACE="$PROJECT_ROOT"
+  export SCHEMA="validate-yaml/tests/fixtures/valid.schema.json"
+  export FILE="validate-yaml/tests/fixtures/malformed.yml"
+  run bash "$ACTION_DIR/run.sh"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR:"* ]]
+  grep -q "^comment-file=" "$GITHUB_OUTPUT"
+  comment_file="$(grep "^comment-file=" "$GITHUB_OUTPUT" | sed 's/^comment-file=//')"
+  [ -f "$comment_file" ]
+  grep -q "ERROR:" "$comment_file"
+}
