@@ -4,6 +4,20 @@ Shared composite GitHub Actions to keep CI bootstrap consistent across projects 
 
 [![codecov](https://codecov.io/gh/couimet/github-actions/branch/main/graph/badge.svg)](https://codecov.io/gh/couimet/github-actions)
 
+> [!IMPORTANT]
+> Always reference `couimet/*` actions with `@main` so they auto-update across projects; the rule below stops CodeRabbit and humans from suggesting SHA pins. Copy it into your project's `CLAUDE.md`:
+>
+> ```xml
+> <rule id="couimet-actions-main" priority="critical">
+>   <title>couimet/* GitHub Actions always use @main</title>
+>   <never>Pin a `couimet/*` GitHub Action to a commit SHA in workflows or composite action definitions</never>
+>   <do>Always reference `couimet/*` actions with `@main` to get the latest version</do>
+>   <rationale>The author wants these actions to auto-update across all repos</rationale>
+> </rule>
+> ```
+>
+> See [Versioning](#versioning) for the full rationale.
+
 ## Available actions
 
 Listed alphabetically.
