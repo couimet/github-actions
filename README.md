@@ -22,6 +22,37 @@ Shared composite GitHub Actions to keep CI bootstrap consistent across projects 
 
 Listed alphabetically.
 
+### `auto-fix`
+
+Runs a fix command (e.g., `pnpm format:fix && pnpm lint:fix`) and auto-commits any resulting changes. Thin wrapper around [stefanzweifel/git-auto-commit-action](https://github.com/stefanzweifel/git-auto-commit-action) pinned to a commit SHA, so consuming repos avoid duplicating the pin. The default commit message (`chore: auto-fix [skip ci]`) includes the `[skip ci]` token, which prevents the auto-commit from triggering another CI run — without it, the fix commit would re-trigger the pipeline and risk an infinite CI loop. Keep the `[skip ci]` token in the message when overriding `commit-message`; dropping it only re-triggers CI when the workflow is called with the `auto-fix-token` secret. The workflow's recursion guard matches the head commit subject against the configured message, so keep the message a single line, and keep the fix command idempotent as a backstop.
+
+The consuming workflow's job needs `contents: write` in its `permissions:` block. On `pull_request` events, the caller must check out the PR head ref with `persist-credentials: true` so the auto-fix commit can be pushed instead of failing on a detached HEAD.
+
+| Input               | Required | Default                                        | Description                                                                                                                                                                                                                                                           |
+| ------------------- | -------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `commit-message`    | no       | `chore: auto-fix [skip ci]`                    | Commit message for the auto-fix commit. Keep the `[skip ci]` token when overriding; dropping it only re-triggers CI when the workflow is called with the `auto-fix-token` secret, and the recursion guard matches the head commit subject against this exact message. |
+| `commit-user-email` | no       | `github-actions[bot]@users.noreply.github.com` | Email for the auto-fix commit author.                                                                                                                                                                                                                                 |
+| `commit-user-name`  | no       | `github-actions[bot]`                          | Name for the auto-fix commit author.                                                                                                                                                                                                                                  |
+| `fix-command`       | yes      | (none)                                         | Shell command to run for auto-fixing (e.g., `pnpm format:fix && pnpm lint:fix`).                                                                                                                                                                                      |
+| `working-directory` | no       | `.`                                            | Directory to run the fix command in.                                                                                                                                                                                                                                  |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: true
+      ref: ${{ github.event.pull_request.head.ref }}
+  - uses: couimet/github-actions/setup-node-pnpm@main
+  - uses: couimet/github-actions/install-deps@main
+  - uses: couimet/github-actions/auto-fix@main
+    with:
+      fix-command: pnpm format:fix && pnpm lint:fix
+```
+
+Prefer pre-commit hooks (e.g., Husky + lint-staged) over CI auto-fix: hooks fix issues before they leave the developer's machine, with no CI permission elevation and no extra CI runs. Auto-fix is best used as a safety net for contributors who bypass hooks — keep the CI format/lint check as a read-only gate and let the auto-fix commit be the fix path. See the CodeRabbit analysis in [issue #28](https://github.com/couimet/github-actions/issues/28) for the full trade-offs.
+
 ### `bats-test`
 
 Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a directory of `.bats` files. The step fails when any test fails. By default, posts a sticky PR comment with test result counts via `publish-pr-comment` (set `publish-comment: 'false'` to opt out). The consuming workflow's job needs `pull-requests: write` in its `permissions:` block when comment publishing is active.
@@ -245,6 +276,25 @@ steps:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+### `detect-auto-fix-commit`
+
+Outputs whether the head commit subject matches a configured auto-fix commit message. This is the recursion guard the `typescript-ci-checks` workflow uses to skip its own fix commits: read `outputs.is-auto-fix` and skip the auto-fix step when it is `'true'`.
+
+| Input            | Required | Default | Description                                               |
+| ---------------- | -------- | ------- | --------------------------------------------------------- |
+| `commit-message` | yes      | (none)  | Commit subject that marks a commit as an auto-fix commit. |
+
+`outputs.is-auto-fix` is `'true'` when the latest commit subject matches `commit-message`.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: couimet/github-actions/detect-auto-fix-commit@main
+    id: guard
+    with:
+      commit-message: 'chore: auto-fix [skip ci]'
+```
+
 ### `format`
 
 Runs a format command. Defaults to `pnpm format`; override `command` for non-pnpm projects (e.g., `command: make fmt`). The step fails if any file needs formatting.
@@ -331,12 +381,13 @@ steps:
 
 ### `markdownlint`
 
-Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) at a pinned npm version. The step fails on any lint error.
+Lints Markdown files with [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) at a pinned npm version. In the default `check` mode the step fails on any lint error; set `mode: fix` to run `markdownlint-cli2 --fix` and fix issues in place instead.
 
 | Input                  | Required | Default   | Description                                                                                                                        |
 | ---------------------- | -------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `config`               | no       | (empty)   | Path to a config file passed as `--config`. When empty, auto-discovers all config files at the repo root (supports split configs). |
 | `markdownlint-version` | no       | (empty)   | Version of `markdownlint-cli2`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override.            |
+| `mode`                 | no       | `check`   | `check` performs a read-only lint (the default); `fix` runs `markdownlint-cli2 --fix` to fix issues in place.                      |
 | `paths`                | no       | `**/*.md` | Space-separated glob(s) of Markdown files to lint.                                                                                 |
 | `working-directory`    | no       | `.`       | Directory to run markdownlint in. Set when the target lives in a subdirectory.                                                     |
 
@@ -350,14 +401,15 @@ steps:
 
 ### `prettier`
 
-Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version. The action honors the consuming repo's `.prettierrc*` and `.prettierignore` — defaulting to `.` paths lets the ignore file scope the check. The step fails when any file needs formatting.
+Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version. The action honors the consuming repo's `.prettierrc*` and `.prettierignore` — defaulting to `.` paths lets the ignore file scope the check. In the default `check` mode the step fails when any file needs formatting; set `mode: fix` to run `prettier --write` and fix files in place instead.
 
-| Input               | Required | Default | Description                                                                                                      |
-| ------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.             |
-| `paths`             | no       | `.`     | Space-separated path(s) passed to `prettier --check`; the consuming repo's `.prettierignore` governs exclusions. |
-| `prettier-version`  | no       | (empty) | Version of `prettier`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override.   |
-| `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                       |
+| Input               | Required | Default | Description                                                                                                    |
+| ------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.           |
+| `mode`              | no       | `check` | `check` runs `prettier --check` (read-only, the default); `fix` runs `prettier --write` to fix files in place. |
+| `paths`             | no       | `.`     | Space-separated path(s) passed to prettier; the consuming repo's `.prettierignore` governs exclusions.         |
+| `prettier-version`  | no       | (empty) | Version of `prettier`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override. |
+| `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                     |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -502,18 +554,21 @@ One-step CI for TypeScript projects. Bundles frequently-used CI steps into a sin
 
 The `coverage-comment` step posts a PR comment with Jest coverage summaries and optional test stats. It only runs on `pull_request` events. The consuming workflow's job needs `pull-requests: write` in its `permissions:` block.
 
-| Input                      | Required | Default          | Description                                                                                                |
-| -------------------------- | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| `build-command`            | no       | `pnpm build`     | Command to run for building.                                                                               |
-| `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.                                     |
-| `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                           |
-| `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job. |
-| `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                                             |
-| `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                      |
-| `lint-command`             | no       | `pnpm lint`      | Command to run for linting.                                                                                |
-| `node-version`             | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                              |
-| `test-command`             | no       | `pnpm test`      | Command to run for testing.                                                                                |
-| `working-directory`        | no       | `.`              | Directory containing `package.json`.                                                                       |
+When `auto-fix-command` is set, an auto-fix step runs after format and lint and commits the fixes back to the branch. The consuming job must check out the PR head ref with `persist-credentials: true` and grant `contents: write` in its `permissions:` block. The step only runs on same-repository `pull_request` events, so fork PRs are skipped.
+
+| Input                      | Required | Default          | Description                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | -------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto-fix-command`         | no       | (empty)          | Command to run for auto-fixing after format and lint (e.g., `pnpm format:fix && pnpm lint:fix`). When empty (the default), auto-fix is disabled; when set, runs an auto-fix step on same-repository `pull_request` events. Requires the PR head ref checked out with `persist-credentials: true` and `contents: write`; fork PRs are skipped. |
+| `build-command`            | no       | `pnpm build`     | Command to run for building.                                                                                                                                                                                                                                                                                                                  |
+| `check-no-prerelease-deps` | no       | `true`           | Whether to check for prerelease dependency patterns in `package.json`.                                                                                                                                                                                                                                                                        |
+| `check-todos`              | no       | `true`           | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                                                                                                                                                                                                              |
+| `coverage-comment`         | no       | `true`           | Whether to post a coverage report as a PR comment after tests. Requires `pull-requests: write` on the job.                                                                                                                                                                                                                                    |
+| `format-command`           | no       | `pnpm format`    | Command to run for formatting.                                                                                                                                                                                                                                                                                                                |
+| `guard-versions`           | no       | `true`           | Whether to run `guard-versions` (block pre-release versions on main).                                                                                                                                                                                                                                                                         |
+| `lint-command`             | no       | `pnpm lint`      | Command to run for linting.                                                                                                                                                                                                                                                                                                                   |
+| `node-version`             | no       | (reads `.nvmrc`) | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                                                                                                                                                                                                                                                                 |
+| `test-command`             | no       | `pnpm test`      | Command to run for testing.                                                                                                                                                                                                                                                                                                                   |
+| `working-directory`        | no       | `.`              | Directory containing `package.json`.                                                                                                                                                                                                                                                                                                          |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -523,6 +578,19 @@ steps:
     with:
       persist-credentials: false
   - uses: couimet/github-actions/typescript-ci@main
+```
+
+To enable auto-fix, check out the PR head ref with persisted credentials (the job needs `permissions: contents: write`):
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: true
+      ref: ${{ github.event.pull_request.head.ref }}
+  - uses: couimet/github-actions/typescript-ci@main
+    with:
+      auto-fix-command: pnpm format:fix && pnpm lint:fix
 ```
 
 For Turborepo monorepos, define root-level pnpm scripts that match the defaults so no overrides are needed (as done in `ts-npm-packages`):
@@ -605,26 +673,31 @@ Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as s
 
 The `test` job depends on `build` (`needs: [build]`). When the build fails, tests are skipped to surface the right failure fast. Pass compiled output (or any generated files) from build to test via `build-artifact-paths` to avoid recompiling in the test runner.
 
-| Input                      | Required | Default              | Description                                                                                                                                            |
-| -------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `build-artifact-paths`     | no       | `packages/*/out/`    | Multi-line globs of build output to pass from the build job to the test job. Set to an empty string to disable the artifact upload/download.           |
-| `build-command`            | no       | `pnpm build`         | Command to run for building.                                                                                                                           |
-| `check-no-prerelease-deps` | no       | `true`               | Whether to check for prerelease dependency patterns in `package.json`.                                                                                 |
-| `check-todos`              | no       | `true`               | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                       |
-| `codecov-files`            | no       | `coverage/lcov.info` | Coverage report file(s) to upload (glob). Passed through to `codecov-typescript-upload`. Useful for monorepos (e.g., `packages/*/coverage/lcov.info`). |
-| `codecov-token`            | no       | (empty)              | Codecov upload token for private repos and fork PRs. Prefer the identically named `codecov-token` secret instead; this input is kept as a fallback.    |
-| `codecov-upload`           | no       | `true`               | Whether to upload coverage to Codecov from the test job.                                                                                               |
-| `coverage-comment`         | no       | `true`               | Whether to post a coverage report as a PR comment after tests.                                                                                         |
-| `format-command`           | no       | `pnpm format`        | Command to run for formatting.                                                                                                                         |
-| `guard-versions`           | no       | `true`               | Whether to run `guard-versions` (block pre-release versions on main).                                                                                  |
-| `lint-command`             | no       | `pnpm lint`          | Command to run for linting.                                                                                                                            |
-| `node-version`             | no       | (reads `.nvmrc`)     | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                                                                          |
-| `test-command`             | no       | `pnpm test`          | Command to run for testing.                                                                                                                            |
-| `working-directory`        | no       | `.`                  | Directory containing `package.json`.                                                                                                                   |
+When `auto-fix-command` is set, an `auto-fix` job runs when format or lint fails, so it can fix the files that caused the failure, and commits the fixes back to the branch. By default the fix commit uses `chore: auto-fix [skip ci]` and is pushed with GITHUB_TOKEN, so no checks report on the fixed SHA and repos with required status checks stay merge-blocked until another commit lands. For the opt-in mode, pass the `auto-fix-token` secret (a PAT or GitHub App token) plus an `auto-fix-commit-message` without `[skip ci]`: the fix commit then re-triggers the pipeline so checks report green on the fixed SHA, while the auto-fix job skips its own commits by matching the head commit subject against the configured `auto-fix-commit-message`, and git-auto-commit-action no-ops when there is nothing to fix. The job runs with `contents: write` permission to push the fix commit.
 
-| Secret          | Required | Description                                                                                                                        |
-| --------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `codecov-token` | no       | Codecov upload token. Use this instead of the input when passing `secrets.CODECOV_TOKEN` from the caller. Falls back to the input. |
+| Input                      | Required | Default                     | Description                                                                                                                                                                                                      |
+| -------------------------- | -------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto-fix-command`         | no       | (empty)                     | Command to run for auto-fixing after format and lint (e.g., `pnpm format:fix && pnpm lint:fix`). When empty (the default), the auto-fix job is not added.                                                        |
+| `auto-fix-commit-message`  | no       | `chore: auto-fix [skip ci]` | Commit message for the auto-fix commit. Keep the `[skip ci]` token unless paired with the `auto-fix-token` secret; the recursion guard matches the head commit subject against this exact message (single line). |
+| `build-artifact-paths`     | no       | `packages/*/out/`           | Multi-line globs of build output to pass from the build job to the test job. Set to an empty string to disable the artifact upload/download.                                                                     |
+| `build-command`            | no       | `pnpm build`                | Command to run for building.                                                                                                                                                                                     |
+| `check-no-prerelease-deps` | no       | `true`                      | Whether to check for prerelease dependency patterns in `package.json`.                                                                                                                                           |
+| `check-todos`              | no       | `true`                      | Whether to count TODOs and FIXMEs. On PRs, reports the delta vs the base branch.                                                                                                                                 |
+| `codecov-files`            | no       | `coverage/lcov.info`        | Coverage report file(s) to upload (glob). Passed through to `codecov-typescript-upload`. Useful for monorepos (e.g., `packages/*/coverage/lcov.info`).                                                           |
+| `codecov-token`            | no       | (empty)                     | Codecov upload token for private repos and fork PRs. Prefer the identically named `codecov-token` secret instead; this input is kept as a fallback.                                                              |
+| `codecov-upload`           | no       | `true`                      | Whether to upload coverage to Codecov from the test job.                                                                                                                                                         |
+| `coverage-comment`         | no       | `true`                      | Whether to post a coverage report as a PR comment after tests.                                                                                                                                                   |
+| `format-command`           | no       | `pnpm format`               | Command to run for formatting.                                                                                                                                                                                   |
+| `guard-versions`           | no       | `true`                      | Whether to run `guard-versions` (block pre-release versions on main).                                                                                                                                            |
+| `lint-command`             | no       | `pnpm lint`                 | Command to run for linting.                                                                                                                                                                                      |
+| `node-version`             | no       | (reads `.nvmrc`)            | Node.js version override. When empty, reads `.nvmrc` from the consuming repo.                                                                                                                                    |
+| `test-command`             | no       | `pnpm test`                 | Command to run for testing.                                                                                                                                                                                      |
+| `working-directory`        | no       | `.`                         | Directory containing `package.json`.                                                                                                                                                                             |
+
+| Secret           | Required | Description                                                                                                                                                                                    |
+| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto-fix-token` | no       | Optional PAT or GitHub App token for the auto-fix push. When set, the fix commit can trigger a fresh CI run on the fixed SHA, paired with an `auto-fix-commit-message` that omits `[skip ci]`. |
+| `codecov-token`  | no       | Codecov upload token. Use this instead of the input when passing `secrets.CODECOV_TOKEN` from the caller. Falls back to the input.                                                             |
 
 ```yaml
 jobs:

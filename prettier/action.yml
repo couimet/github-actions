@@ -1,12 +1,16 @@
 name: 'Run Prettier'
-description: 'Installs Prettier at a pinned version via npm and checks formatting against the consuming repo .prettierrc* / .prettierignore.'
+description: 'Installs Prettier at a pinned version via npm and checks (or fixes) formatting against the consuming repo .prettierrc* / .prettierignore.'
 inputs:
   config:
     description: 'Path passed as --config. When empty, Prettier auto-discovers .prettierrc* in the consuming repo.'
     required: false
     default: ''
+  mode:
+    description: "'check' runs prettier --check (read-only, the default); 'fix' runs prettier --write to auto-fix formatting."
+    required: false
+    default: 'check'
   paths:
-    description: 'Path(s) passed to prettier --check; the consuming repo .prettierignore governs exclusions.'
+    description: 'Path(s) passed to prettier; the consuming repo .prettierignore governs exclusions.'
     required: false
     default: '.'
   prettier-version:
@@ -27,9 +31,10 @@ runs:
         PRETTIER_VERSION: ${{ inputs.prettier-version }}
       run: bash "${{ github.action_path }}/install.sh"
 
-    - name: Check formatting
+    - name: Run Prettier
       shell: bash
       env:
+        MODE: ${{ inputs.mode }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         CONFIG: ${{ inputs.config }}
         PATHS: ${{ inputs.paths }}

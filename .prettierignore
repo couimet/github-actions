@@ -1,5 +1,6 @@
 pnpm-lock.yaml
 tests/coverage/
+tests/fixtures/
 node_modules/
 # Intentionally malformed YAML fixture for the validate-yaml action
 validate-yaml/tests/fixtures/malformed.yml
