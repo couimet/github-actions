@@ -8,6 +8,14 @@ inputs:
   file:
     description: Path to the YAML file to validate
     required: true
+  github-token:
+    description: GitHub token for posting PR comments. Pass secrets.GITHUB_TOKEN from the consuming workflow.
+    required: false
+    default: ''
+  header:
+    description: Unique header that identifies the PR comment across re-runs (enables sticky update behavior).
+    required: false
+    default: 'YAML validation check'
 
 runs:
   using: composite
@@ -16,11 +24,25 @@ runs:
       uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86
 
     - name: Validate YAML
+      id: validate
+      continue-on-error: true
       shell: bash
       env:
         SCHEMA: ${{ inputs.schema }}
         FILE: ${{ inputs.file }}
+      run: bash "${{ github.action_path }}/run.sh"
+
+    - name: Post PR comment
+      if: steps.validate.outputs.comment-file != '' && inputs.github-token != '' && github.event.pull_request != null
+      uses: couimet/github-actions/publish-pr-comment@main
+      with:
+        comment-file: ${{ steps.validate.outputs.comment-file }}
+        github-token: ${{ inputs.github-token }}
+        header: ${{ inputs.header }}
+
+    - name: Fail on validation failure
+      if: always() && steps.validate.outcome == 'failure'
+      shell: bash
       run: |
-        cd "${{ github.action_path }}"
-        uv sync --locked
-        uv run --locked ./validate.sh "$GITHUB_WORKSPACE/$SCHEMA" "$GITHUB_WORKSPACE/$FILE"
+        echo "::error::YAML validation failed. See the step log for details."
+        exit 1

@@ -550,12 +550,14 @@ steps:
 
 ### `validate-yaml`
 
-Validates a YAML file against a JSON Schema file. Uses Python (jsonschema + pyyaml) managed by uv for reproducible dependency resolution. The step fails if the YAML file does not conform to the schema.
+Validates a YAML file against a JSON Schema file. Uses Python (jsonschema + pyyaml) managed by uv for reproducible dependency resolution. The step fails if the YAML file does not conform to the schema. When `github-token` is provided, a validation failure also posts a sticky PR comment with the error output; the comment persists until a later failure run updates it.
 
-| Input    | Required | Default | Description                        |
-| -------- | -------- | ------- | ---------------------------------- |
-| `schema` | yes      | (none)  | Path to the JSON Schema file.      |
-| `file`   | yes      | (none)  | Path to the YAML file to validate. |
+| Input          | Required | Default                 | Description                                                                  |
+| -------------- | -------- | ----------------------- | ---------------------------------------------------------------------------- |
+| `schema`       | yes      | (none)                  | Path to the JSON Schema file.                                                |
+| `file`         | yes      | (none)                  | Path to the YAML file to validate.                                           |
+| `github-token` | no       | (empty)                 | GitHub token for posting PR comments. Pass `secrets.GITHUB_TOKEN`.           |
+| `header`       | no       | `YAML validation check` | Unique header that identifies the PR comment across re-runs (sticky update). |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -568,6 +570,7 @@ steps:
     with:
       schema: path/to/schema.json
       file: path/to/data.yml
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Available workflows
