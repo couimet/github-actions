@@ -45,8 +45,43 @@ jobs:
       - name: Lint markdown
         uses: ./markdownlint
 
+      - name: Create markdown lint fixture
+        shell: bash
+        run: mkdir -p fix-test && printf '# Heading with trailing spaces\x20\x20\x20\n\n\n' > fix-test/bad.md
+
+      - name: Test markdownlint fix mode
+        uses: ./markdownlint
+        with:
+          mode: fix
+          paths: fix-test/**/*.md
+
+      - name: Verify fixed markdown passes lint
+        uses: ./markdownlint
+        with:
+          paths: fix-test/**/*.md
+
+      - name: Remove markdown lint fixture
+        shell: bash
+        run: rm -rf fix-test
+
       - name: Check formatting
         uses: ./prettier
+
+      - name: Prepare misformatted fixture for fix-mode self-test
+        shell: bash
+        run: cp tests/fixtures/format-bad.js /tmp/test-fix.js
+
+      - name: Fix formatting (prettier fix mode)
+        uses: ./prettier
+        with:
+          mode: fix
+          config: ''
+          paths: /tmp/test-fix.js
+
+      - name: Verify prettier fix-mode result
+        uses: ./prettier
+        with:
+          paths: /tmp/test-fix.js
 
       - name: Lint shell scripts
         uses: ./shellcheck
@@ -113,6 +148,16 @@ jobs:
           github-token: ${{ github.token }}
           header: publish-pr-comment-self-test
           comment-file: tests/fixtures/comment-body.md
+
+      - name: Test auto-fix action (no-op fix command)
+        uses: ./auto-fix
+        with:
+          fix-command: 'true'
+
+      - name: Test detect-auto-fix-commit action
+        uses: ./detect-auto-fix-commit
+        with:
+          commit-message: 'chore: auto-fix [skip ci]'
 
       - name: Test check-todos action
         uses: ./check-todos
