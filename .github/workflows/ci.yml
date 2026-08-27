@@ -196,6 +196,16 @@ jobs:
       guard-versions: true
       build-artifact-paths: ''
 
+  self-test-shell-ci-checks:
+    name: Self-test shell-ci-checks workflow
+    permissions:
+      contents: read
+    uses: ./.github/workflows/shell-ci-checks.yml
+    with:
+      # The dedicated BATS step above already posts the sticky test-results
+      # comment; skip it here so the two runs do not fight over the same header.
+      publish-comment: 'false'
+
   self-test-ci-checks:
     name: Self-test ci-checks workflow
     permissions:

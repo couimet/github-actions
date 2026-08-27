@@ -667,6 +667,45 @@ jobs:
 
 The workflow takes no inputs or secrets; it reads `github.event.pull_request.number` and `github.event.changes.base.ref.from` from the caller's event context.
 
+### `shell-ci-checks`
+
+Reusable workflow for shell script projects. Runs `shellcheck` and `bats-test` as separate jobs so each produces its own PR status check. Use this when you want per-step visibility in the PR status section; call the leaf actions directly in a single job when you prefer fewer runner minutes and a single check entry. A composite action variant can be added later if single-step embedding is wanted.
+
+| Input             | Required | Default                                   | Description                                                                                  |
+| ----------------- | -------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `paths`           | no       | `.`                                       | Root to search for shell scripts.                                                            |
+| `extensions`      | no       | `sh bash`                                 | Space-separated file extensions to lint. An empty value lints all regular files under paths. |
+| `exclude`         | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.                                     |
+| `severity`        | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`).                                   |
+| `test-directory`  | no       | `bats-tests/`                             | Directory containing `.bats` test files.                                                     |
+| `bats-version`    | no       | `1.13.0`                                  | BATS version installed; pinned so CI matches the local brew stable.                          |
+| `recursive`       | no       | `true`                                    | Recurse into subdirectories of `test-directory`.                                             |
+| `support-install` | no       | `true`                                    | Install the `bats-support` helper library.                                                   |
+| `assert-install`  | no       | `true`                                    | Install the `bats-assert` helper library.                                                    |
+| `detik-install`   | no       | `false`                                   | Install the `detik` helper library.                                                          |
+| `file-install`    | no       | `false`                                   | Install the `bats-file` helper library.                                                      |
+| `formatter`       | no       | (empty)                                   | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output.         |
+| `publish-comment` | no       | `true`                                    | Post a sticky PR comment with test result counts. Set to `false` to opt out.                 |
+| `comment-header`  | no       | `BATS Test Results`                       | Unique header that identifies the BATS comment across re-runs (sticky update).               |
+
+The `bats-test` job posts a sticky PR comment when `publish-comment` is `true`; the caller's job needs `pull-requests: write` in its `permissions:` block.
+
+```yaml
+jobs:
+  shell-checks:
+    uses: couimet/github-actions/.github/workflows/shell-ci-checks.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+```
+
+Each job runs in parallel and appears as a separate check:
+
+```text
+CI / shellcheck
+CI / bats-test
+```
+
 ### `typescript-ci-checks`
 
 Reusable workflow alternative to `typescript-ci`. Runs the same sub-actions as separate jobs so each produces its own PR status check. Use this when you want per-step visibility in the PR status section; use the composite `typescript-ci` action when you prefer fewer runner minutes and a single check entry.

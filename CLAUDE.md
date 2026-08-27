@@ -165,6 +165,8 @@
     - Entrypoint, pinning, and reference rules: see CI001-CI004 in <critical-rules>
     - Each action with a script has a BATS suite at bats-tests/shell/<action>.bats; repo-integrity checks live in verify-*.bats
     - typescript-ci is the only orchestrator action; all other actions are leaf steps
+    - Reusable workflows compose leaf actions into per-job checks for per-step CI visibility
+    - README structure: `## Available actions` documents composite actions alphabetically; `## Available workflows` documents reusable workflows alphabetically. New entries go in the section matching their type, sorted alphabetically within it
     - Context dirs: bats-tests/ holds this repo's own suites (default test-directory for consuming repos), scripts/ has verify helpers run by make check-actions, tests/ is the Jest fixture used in CI; reusable workflows live in .github/workflows/
   </conventions>
 </project-context>
