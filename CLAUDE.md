@@ -135,4 +135,36 @@
     - CI self-tests actions against tests/ fixture
     - Formatting enforced by Prettier
   </tech>
+  <actions>
+    <!-- Compact action index, alphabetical like README.md "Available actions". README is the single source of truth for each action's full contract (inputs, outputs, usage); the index rows carry only a one-line purpose. Before modifying an action, read its README section, its action.yml, and its BATS suite. -->
+    <action name="auto-fix">Runs a fix command and auto-commits any resulting changes with a `[skip ci]` message</action>
+    <action name="bats-test">Runs BATS tests via SHA-pinned bats-core/bats-action; optionally posts results as a sticky PR comment</action>
+    <action name="build">Runs a build command (default `pnpm build`)</action>
+    <action name="check-generated-drift">Regenerates files and fails if git detects drift; posts a comment listing out-of-sync files</action>
+    <action name="check-no-prerelease-deps">Fails if any package.json declares a prerelease npm dependency</action>
+    <action name="check-todos">Counts TODOs/FIXMEs; on PRs reports the delta vs the base branch</action>
+    <action name="codecov-typescript-upload">Uploads Jest coverage to Codecov, with optional per-package flags</action>
+    <action name="codecov-upload">Language-agnostic Codecov upload; prefer codecov-typescript-upload for Jest coverage</action>
+    <action name="coverage-comment">Posts a PR comment with Jest coverage summaries and optional JUnit test stats</action>
+    <action name="detect-auto-fix-commit">Outputs whether the head commit is an auto-fix commit</action>
+    <action name="format">Runs a format command (default `pnpm format`)</action>
+    <action name="guard-versions">Blocks PRs from merging pre-release versions to main</action>
+    <action name="install-deps">Restores the pnpm store from cache and runs `pnpm install --frozen-lockfile`</action>
+    <action name="lint">Runs a lint command (default `pnpm lint`)</action>
+    <action name="markdownlint">Installs markdownlint-cli2 at a pinned version and lints or fixes Markdown files</action>
+    <action name="prettier">Installs Prettier at a pinned version and checks or fixes formatting against the repo config</action>
+    <action name="publish-pr-comment">Posts a sticky PR comment; thin wrapper around marocchino/sticky-pull-request-comment</action>
+    <action name="request-coderabbit-full-review">Posts a @coderabbitai full review comment to trigger a fresh CodeRabbit review</action>
+    <action name="setup-node-pnpm">Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack</action>
+    <action name="shellcheck">Discovers shell scripts (including extensionless) and runs shellcheck</action>
+    <action name="test">Runs a test command (default `pnpm test`)</action>
+    <action name="typescript-ci">One-step CI orchestrator chaining 12 internal actions (setup, install, format, lint, build, test, coverage, codecov, guards, checks, auto-fix)</action>
+    <action name="validate-yaml">Validates a YAML file against a JSON Schema; posts a comment on failure</action>
+  </actions>
+  <conventions>
+    - Entrypoint, pinning, and reference rules: see CI001-CI004 in <critical-rules>
+    - Each action with a script has a BATS suite at bats-tests/shell/<action>.bats; repo-integrity checks live in verify-*.bats
+    - typescript-ci is the only orchestrator action; all other actions are leaf steps
+    - Context dirs: bats-tests/ holds this repo's own suites (default test-directory for consuming repos), scripts/ has verify helpers run by make check-actions, tests/ is the Jest fixture used in CI; reusable workflows live in .github/workflows/
+  </conventions>
 </project-context>
