@@ -8,7 +8,7 @@ inputs:
   repo:
     description: 'Repository to post the comment on (owner/repo). Defaults to the current repository.'
     required: false
-    default: ${{ github.repository }}
+    default: ''
   pr-number:
     description: 'Pull request number to post the review request on'
     required: true
@@ -31,7 +31,7 @@ runs:
       id: request
       shell: bash
       env:
-        REPO: ${{ inputs.repo }}
+        REPO: ${{ inputs.repo || github.repository }}
         PR_NUMBER: ${{ inputs.pr-number }}
         GITHUB_TOKEN: ${{ inputs.github-token || github.token }}
         TRIGGER: ${{ inputs.trigger }}
