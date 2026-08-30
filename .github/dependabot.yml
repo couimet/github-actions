@@ -119,15 +119,3 @@ updates:
       npm:
         patterns:
           - '*'
-
-  - package-ecosystem: 'npm'
-    directory: '/bats-test'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '09:00'
-      timezone: 'America/Toronto'
-    groups:
-      npm:
-        patterns:
-          - '*'
