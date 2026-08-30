@@ -26,7 +26,7 @@ on:
       bats-version:
         required: false
         type: string
-        default: '1.13.0'
+        default: '1.14.0'
       recursive:
         required: false
         type: string
@@ -95,6 +95,8 @@ jobs:
           detik-install: ${{ inputs.detik-install }}
           file-install: ${{ inputs.file-install }}
           formatter: ${{ inputs.formatter }}
-          publish-comment: ${{ inputs.publish-comment }}
+          # Fork PRs get a read-only GITHUB_TOKEN, so the sticky comment would
+          # fail with "Resource not accessible by integration"; skip it there.
+          publish-comment: ${{ github.event.pull_request.head.repo.fork == true && 'false' || inputs.publish-comment }}
           comment-header: ${{ inputs.comment-header }}
           github-token: ${{ github.token }}

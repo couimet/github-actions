@@ -9,7 +9,7 @@ inputs:
   bats-version:
     description: 'BATS version installed by bats-core/bats-action. Pinned (not floating on latest) so CI matches the local brew stable.'
     required: false
-    default: '1.13.0'
+    default: '1.14.0'
   detik-install:
     description: 'Install the bats-detik helper library.'
     required: false

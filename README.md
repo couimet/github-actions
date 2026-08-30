@@ -60,7 +60,7 @@ Runs [BATS](https://github.com/bats-core/bats-core) shell tests against a direct
 | Input             | Required | Default             | Description                                                                          |
 | ----------------- | -------- | ------------------- | ------------------------------------------------------------------------------------ |
 | `assert-install`  | no       | `true`              | Install the `bats-assert` helper library.                                            |
-| `bats-version`    | no       | `1.13.0`            | BATS version installed; pinned so CI matches the local brew stable.                  |
+| `bats-version`    | no       | `1.14.0`            | BATS version installed; pinned so CI matches the local brew stable.                  |
 | `comment-header`  | no       | `BATS Test Results` | Unique header that identifies the BATS comment across re-runs (sticky update).       |
 | `detik-install`   | no       | `false`             | Install the `detik` helper library.                                                  |
 | `file-install`    | no       | `false`             | Install the `bats-file` helper library.                                              |
@@ -678,7 +678,7 @@ Reusable workflow for shell script projects. Runs `shellcheck` and `bats-test` a
 | `exclude`         | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.                                     |
 | `severity`        | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`).                                   |
 | `test-directory`  | no       | `bats-tests/`                             | Directory containing `.bats` test files.                                                     |
-| `bats-version`    | no       | `1.13.0`                                  | BATS version installed; pinned so CI matches the local brew stable.                          |
+| `bats-version`    | no       | `1.14.0`                                  | BATS version installed; pinned so CI matches the local brew stable.                          |
 | `recursive`       | no       | `true`                                    | Recurse into subdirectories of `test-directory`.                                             |
 | `support-install` | no       | `true`                                    | Install the `bats-support` helper library.                                                   |
 | `assert-install`  | no       | `true`                                    | Install the `bats-assert` helper library.                                                    |
@@ -699,11 +699,11 @@ jobs:
       pull-requests: write
 ```
 
-Each job runs in parallel and appears as a separate check:
+Each job runs in parallel and appears as a separate check. Exact check names depend on the caller workflow and its job name: GitHub names them `{caller job name} / {called job name}`, so with the `shell-checks` caller above they are:
 
 ```text
-CI / shellcheck
-CI / bats-test
+shell-checks / shellcheck
+shell-checks / bats-test
 ```
 
 ### `typescript-ci-checks`
