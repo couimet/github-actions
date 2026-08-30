@@ -27,7 +27,21 @@ teardown() {
 
 # --- check mode (default) ---
 
-@test "default inputs: runs prettier --check ." {
+@test "default inputs: runs prettier --check . with a repo config present" {
+  touch .prettierrc.json
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check .$"
+}
+
+@test "no repo config: falls back to bundled @couimet/eslint-config config" {
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check --config .*/prettier/node_modules/@couimet/eslint-config/prettier.js \.$"
+}
+
+@test "prettier.config.js present: no --config flag" {
+  touch prettier.config.js
   run bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier args: --check .$"
@@ -39,7 +53,15 @@ teardown() {
   echo "$output" | grep -q "prettier args: --check --config .prettierrc.yaml .$"
 }
 
+@test "explicit config wins over a repo config file" {
+  touch .prettierrc.json
+  run env CONFIG=".prettierrc.yaml" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check --config .prettierrc.yaml .$"
+}
+
 @test "custom paths: word-splits PATHS into separate arguments" {
+  touch .prettierrc.json
   run env PATHS="src/ tests/" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier args: --check src/ tests/$"
@@ -48,6 +70,7 @@ teardown() {
 @test "working directory: cds to WORKING_DIRECTORY before running" {
   mkdir -p "$TEST_TEMP_DIR/subdir"
   touch "$TEST_TEMP_DIR/subdir/test.js"
+  touch "$TEST_TEMP_DIR/subdir/.prettierrc.yaml"
   run env WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier pwd: .*/subdir$"
@@ -56,10 +79,17 @@ teardown() {
 
 # --- fix mode ---
 
-@test "fix mode: runs prettier --write" {
+@test "fix mode: runs prettier --write with a repo config present" {
+  touch .prettierrc.json
   run env MODE=fix bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier args: --write .$"
+}
+
+@test "fix mode: falls back to bundled config when the repo has none" {
+  run env MODE=fix bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --write --config .*/prettier/node_modules/@couimet/eslint-config/prettier.js \.$"
 }
 
 @test "rejects invalid MODE" {
@@ -75,6 +105,7 @@ teardown() {
 }
 
 @test "fix mode: word-splits PATHS into separate arguments" {
+  touch .prettierrc.json
   run env MODE=fix PATHS="src/ tests/" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier args: --write src/ tests/$"
@@ -83,6 +114,7 @@ teardown() {
 @test "fix mode: cds to WORKING_DIRECTORY before running" {
   mkdir -p "$TEST_TEMP_DIR/subdir"
   touch "$TEST_TEMP_DIR/subdir/test.js"
+  touch "$TEST_TEMP_DIR/subdir/.prettierrc.yaml"
   run env MODE=fix WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier pwd: .*/subdir$"

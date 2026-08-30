@@ -1,6 +1,7 @@
 {
   "private": true,
   "devDependencies": {
+    "@couimet/eslint-config": ">=1.3.0",
     "prettier": "3.9.6"
   }
 }
