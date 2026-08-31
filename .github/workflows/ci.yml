@@ -71,16 +71,20 @@ jobs:
         shell: bash
         run: cp tests/fixtures/format-bad.js /tmp/test-fix.js
 
+      # /tmp has no .prettierrc*, so these two steps exercise the bundled
+      # canonical config fallback; the repo root covers auto-discovery.
       - name: Fix formatting (prettier fix mode)
         uses: ./prettier
         with:
           mode: fix
           config: ''
+          working-directory: /tmp
           paths: /tmp/test-fix.js
 
       - name: Verify prettier fix-mode result
         uses: ./prettier
         with:
+          working-directory: /tmp
           paths: /tmp/test-fix.js
 
       - name: Lint shell scripts

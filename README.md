@@ -401,15 +401,15 @@ steps:
 
 ### `prettier`
 
-Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version. The action honors the consuming repo's `.prettierrc*` and `.prettierignore` — defaulting to `.` paths lets the ignore file scope the check. In the default `check` mode the step fails when any file needs formatting; set `mode: fix` to run `prettier --write` and fix files in place instead.
+Checks formatting with [Prettier](https://prettier.io/) at a pinned npm version. The action honors the consuming repo's `.prettierrc*`, `prettier.config.*`, `"prettier"` key in `package.json`, and `.prettierignore` — defaulting to `.` paths lets the ignore file scope the check. When the repo has no `.prettierrc*`, `prettier.config.*`, or `"prettier"` key in `package.json`, the action falls back to the canonical `@couimet/eslint-config/prettier` config (an npm dependency of the action, Dependabot-tracked), which also enforces `package.json` key sorting via `prettier-plugin-packagejson`. In the default `check` mode the step fails when any file needs formatting; set `mode: fix` to run `prettier --write` and fix files in place instead.
 
-| Input               | Required | Default | Description                                                                                                    |
-| ------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` in the consuming repo.           |
-| `mode`              | no       | `check` | `check` runs `prettier --check` (read-only, the default); `fix` runs `prettier --write` to fix files in place. |
-| `paths`             | no       | `.`     | Space-separated path(s) passed to prettier; the consuming repo's `.prettierignore` governs exclusions.         |
-| `prettier-version`  | no       | (empty) | Version of `prettier`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override. |
-| `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                     |
+| Input               | Required | Default | Description                                                                                                                                                                                                                                                |
+| ------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`            | no       | (empty) | Path passed as `--config`. When empty, Prettier auto-discovers `.prettierrc*` / `prettier.config.*` / `"prettier"` key in `package.json` in the consuming repo; with no repo config, falls back to the canonical `@couimet/eslint-config/prettier` config. |
+| `mode`              | no       | `check` | `check` runs `prettier --check` (read-only, the default); `fix` runs `prettier --write` to fix files in place.                                                                                                                                             |
+| `paths`             | no       | `.`     | Space-separated path(s) passed to prettier; the consuming repo's `.prettierignore` governs exclusions.                                                                                                                                                     |
+| `prettier-version`  | no       | (empty) | Version of `prettier`. When empty, uses the version from `package.json` (Dependabot-tracked). Set to override.                                                                                                                                             |
+| `working-directory` | no       | `.`     | Directory to run Prettier in. Set when the target lives in a subdirectory.                                                                                                                                                                                 |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
