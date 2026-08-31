@@ -77,6 +77,34 @@ teardown() {
   echo "$output" | grep -q "prettier args: --check .$"
 }
 
+@test "working directory: honors a prettier config in an ancestor directory" {
+  mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/test.js"
+  touch "$TEST_TEMP_DIR/.prettierrc.json"
+  run env WORKING_DIRECTORY="subdir" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check .$"
+}
+
+@test "working directory: honors a prettier key in an ancestor package.json" {
+  mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/test.js"
+  cat > "$TEST_TEMP_DIR/package.json" <<'ENDOFJSON'
+{ "prettier": { "singleQuote": true } }
+ENDOFJSON
+  run env WORKING_DIRECTORY="subdir" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check .$"
+}
+
+@test "working directory: falls back to bundled config when no config exists in any ancestor" {
+  mkdir -p "$TEST_TEMP_DIR/subdir"
+  touch "$TEST_TEMP_DIR/subdir/test.js"
+  run env WORKING_DIRECTORY="subdir" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check --config .*/prettier/node_modules/@couimet/eslint-config/prettier.js \.$"
+}
+
 # --- fix mode ---
 
 @test "fix mode: runs prettier --write with a repo config present" {

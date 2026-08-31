@@ -2,8 +2,10 @@
 set -euo pipefail
 
 # Run prettier with optional --config and explicit paths. When CONFIG is
-# empty and the working directory has no .prettierrc* / prettier.config.*,
-# falls back to the canonical @couimet/eslint-config/prettier config.
+# empty and Prettier would find no config for the target paths (no
+# .prettierrc* / prettier.config.* or package.json "prettier" key in the
+# working directory or any ancestor), falls back to the canonical
+# @couimet/eslint-config/prettier config.
 #
 # Inputs (env):
 #   MODE               check (default, --check) or fix (--write)
@@ -17,11 +19,28 @@ source "$SCRIPT_DIR/../scripts/_lint-helpers.sh"
 
 cd "${WORKING_DIRECTORY:-.}"
 
+# Mirror Prettier's own discovery: a config file or a package.json "prettier"
+# key found in the working directory or any ancestor counts, so the fallback
+# never overrides a config Prettier would resolve for the target files.
+has_prettier_config() {
+  local dir="$1"
+  while true; do
+    if compgen -G "$dir/.prettierrc*" > /dev/null \
+      || compgen -G "$dir/prettier.config.*" > /dev/null \
+      || { [[ -f "$dir/package.json" ]] \
+           && node -e 'process.exit(require(process.argv[1]).prettier ? 0 : 1)' "$dir/package.json" 2>/dev/null; }; then
+      return 0
+    fi
+    if [[ "$dir" == "/" ]]; then
+      return 1
+    fi
+    dir="$(dirname "$dir")"
+  done
+}
+
 # Fall back to the canonical config from @couimet/eslint-config/prettier when
-# the working directory has no file-based prettier config of its own.
-if [[ -z "${CONFIG:-}" ]] \
-  && ! compgen -G ".prettierrc*" > /dev/null \
-  && ! compgen -G "prettier.config.*" > /dev/null; then
+# Prettier would resolve no config of its own for the target files.
+if [[ -z "${CONFIG:-}" ]] && ! has_prettier_config "$PWD"; then
   CONFIG_ARGS=(--config "$SCRIPT_DIR/node_modules/@couimet/eslint-config/prettier.js")
 fi
 
