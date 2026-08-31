@@ -105,6 +105,55 @@ ENDOFJSON
   echo "$output" | grep -q "prettier args: --check --config .*/prettier/node_modules/@couimet/eslint-config/prettier.js \.$"
 }
 
+@test "per-target config: file under a directory with its own config runs plain" {
+  mkdir -p sub
+  touch sub/.prettierrc.json
+  touch sub/file.js
+  run env PATHS="sub/file.js" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check sub/file.js$"
+}
+
+@test "per-target config: mixed configured and unconfigured paths split into two invocations" {
+  mkdir -p sub tests
+  touch sub/.prettierrc.json
+  touch sub/file.js
+  touch tests/file.js
+  run env PATHS="sub tests" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check --config .*/prettier/node_modules/@couimet/eslint-config/prettier.js tests$"
+  echo "$output" | grep -q "prettier args: --check sub$"
+}
+
+@test "per-target config: nested config under the default . target needs no --config" {
+  mkdir -p sub
+  touch sub/.prettierrc.json
+  touch sub/file.js
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check .$"
+}
+
+@test "per-target config: nested package.json prettier key under the default . target needs no --config" {
+  mkdir -p sub
+  cat > sub/package.json <<'ENDOFJSON'
+{ "prettier": { "singleQuote": true } }
+ENDOFJSON
+  touch sub/file.js
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --check .$"
+}
+
+@test "per-target config: glob target whose base directory has a config runs plain" {
+  mkdir -p src
+  touch src/.prettierrc.json
+  touch src/file.js
+  run env PATHS="src/*.js" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -qF "prettier args: --check src/*.js"
+}
+
 # --- fix mode ---
 
 @test "fix mode: runs prettier --write with a repo config present" {
@@ -147,4 +196,15 @@ ENDOFJSON
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "prettier pwd: .*/subdir$"
   echo "$output" | grep -q "prettier args: --write .$"
+}
+
+@test "fix mode: mixed configured and unconfigured paths split into two --write invocations" {
+  mkdir -p sub tests
+  touch sub/.prettierrc.json
+  touch sub/file.js
+  touch tests/file.js
+  run env MODE=fix PATHS="sub tests" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "prettier args: --write --config .*/prettier/node_modules/@couimet/eslint-config/prettier.js tests$"
+  echo "$output" | grep -q "prettier args: --write sub$"
 }
