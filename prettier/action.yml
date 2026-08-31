@@ -1,8 +1,8 @@
 name: 'Run Prettier'
-description: 'Installs Prettier at a pinned version via npm and checks (or fixes) formatting against the consuming repo .prettierrc* / prettier.config.* / .prettierignore. With no repo config, falls back to the canonical @couimet/eslint-config/prettier config.'
+description: 'Installs Prettier at a pinned version via npm and checks (or fixes) formatting against the consuming repo .prettierrc* / prettier.config.* / package.json "prettier" key / .prettierignore. With no repo config, falls back to the canonical @couimet/eslint-config/prettier config.'
 inputs:
   config:
-    description: 'Path passed as --config. When empty, Prettier auto-discovers .prettierrc* / prettier.config.* in the consuming repo; with no repo config, falls back to the canonical @couimet/eslint-config/prettier config.'
+    description: 'Path passed as --config. When empty, Prettier auto-discovers .prettierrc* / prettier.config.* / package.json "prettier" key in the consuming repo; with no repo config, falls back to the canonical @couimet/eslint-config/prettier config.'
     required: false
     default: ''
   mode:
