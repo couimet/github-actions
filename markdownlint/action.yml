@@ -1,10 +1,10 @@
 name: 'Run markdownlint'
-description: 'Installs markdownlint-cli2 at a pinned version via npm and lints (or auto-fixes with --fix in fix mode) Markdown files against a configurable glob and config file. The version pin gives exact parity with a local `npm install -g markdownlint-cli2@<version>`.'
+description: 'Installs markdownlint-cli2 at a pinned version via npm and lints (or auto-fixes with --fix in fix mode) Markdown files against a configurable glob and config file. In fix mode the action registers the custom rule markdownlint-rule-force-align-table-columns (MD060A), so configs that extend @couimet/markdownlint-config get table auto-alignment without listing customRules. The version pin gives exact parity with a local `npm install -g markdownlint-cli2@<version>`.'
 inputs:
   config:
     # Empty default triggers auto-discovery rather than hardcoding a filename —
     # this works for repos with any config name, including split configs.
-    description: 'Path to a markdownlint-cli2 config file passed as --config. When empty, auto-discovers all config files at the repo root (supports split configs).'
+    description: 'Path to a markdownlint-cli2 config file passed as --config. When empty, auto-discovers all config files at the repo root (supports split configs). In fix mode the action writes a temporary effective config that also registers markdownlint-rule-force-align-table-columns, then passes that via --config.'
     required: false
     default: ''
   markdownlint-version:

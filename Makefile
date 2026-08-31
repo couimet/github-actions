@@ -44,5 +44,5 @@ lint-md-fix: markdownlint/node_modules
 lint-sh:
 	find . -type f \( -name '*.sh' -o -name '*.bash' \) -not -path '*/.claude-work/*' -not -path '*/.history/*' -not -path '*/node_modules/*' -exec shellcheck {} +
 
-test: install-prereqs
+test: install-prereqs markdownlint/node_modules
 	bats bats-tests/shell/
