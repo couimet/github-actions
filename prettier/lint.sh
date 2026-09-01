@@ -50,14 +50,15 @@ target_has_config() {
     dir="$(dirname "$target")"
   elif [[ -d "$target" ]]; then
     dir="$target"
-  elif [[ "$target" == *['*?[']* ]]; then
+  elif [[ "$target" == *['*?['{]* ]]; then
     # Glob: Prettier expands it from the nearest literal ancestor, so strip
-    # the last path component until no glob characters remain.
+    # the last path component until no glob characters (wildcards or braces)
+    # remain.
     dir="$target"
-    while [[ "$dir" == *['*?[']* ]] && [[ "$dir" == */* ]]; do
+    while [[ "$dir" == *['*?['{]* ]] && [[ "$dir" == */* ]]; do
       dir="${dir%/*}"
     done
-    if [[ "$dir" == *['*?[']* ]]; then
+    if [[ "$dir" == *['*?['{]* ]]; then
       dir="."
     fi
   else

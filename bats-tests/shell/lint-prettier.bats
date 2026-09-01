@@ -154,6 +154,15 @@ ENDOFJSON
   echo "$output" | grep -qF "prettier args: --check src/*.js"
 }
 
+@test "per-target config: brace glob with config under one expanded base runs plain" {
+  mkdir -p src lib
+  touch src/.prettierrc.json
+  touch src/file.js lib/file.js
+  run env PATHS='{src,lib}/**/*.js' bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -qF "prettier args: --check {src,lib}/**/*.js"
+}
+
 # --- fix mode ---
 
 @test "fix mode: runs prettier --write with a repo config present" {
