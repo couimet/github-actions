@@ -18,5 +18,7 @@ RULE="markdownlint-rule-force-align-table-columns"
 
 @test "lint.sh drives the injector in fix mode" {
   grep -Fq "inject-rule.cjs" "$LINT_SH"
-  grep -Fq "tmp.markdownlint-cli2.jsonc" "$LINT_SH"
+  # `$RANDOM` marks the collision-resistant unique temp config name; if lint.sh
+  # ever reverts to a fixed temp filename, this guard fails.
+  grep -Fq '$RANDOM' "$LINT_SH"
 }

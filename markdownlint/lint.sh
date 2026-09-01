@@ -51,9 +51,16 @@ prepare_fix_config() {
 
   # The temp file must end with `.markdownlint-cli2.jsonc` for cli2 to parse it
   # as an options file, and must live next to the source so relative extends,
-  # customRules, globs, and ignores still resolve.
-  local target
-  target="$(dirname "$source")/tmp.markdownlint-cli2.jsonc"
+  # customRules, globs, and ignores still resolve. Generate a unique name so the
+  # injector never overwrites a consumer config (for example one literally named
+  # `tmp.markdownlint-cli2.jsonc`) and the EXIT trap only removes the file this
+  # invocation created.
+  local base target
+  base="$(dirname "$source")"
+  while :; do
+    target="$base/.tmp.$RANDOM.$RANDOM.markdownlint-cli2.jsonc"
+    [[ ! -e "$target" ]] && break
+  done
   local injector_output
   if ! injector_output="$(node "$SCRIPT_DIR/inject-rule.cjs" "$source" "$target" 2>/dev/null)"; then
     return 1

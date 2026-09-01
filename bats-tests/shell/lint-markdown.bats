@@ -13,11 +13,13 @@ setup() {
 #!/usr/bin/env bash
 echo "markdownlint-cli2 pwd: $(pwd)"
 echo "markdownlint-cli2 args: $*"
-# Capture the --config file so tests can assert on its contents; the script's
-# EXIT trap removes temporary effective configs after the stub exits.
+# Capture the --config file and its path so tests can assert on contents and
+# path; the script's EXIT trap removes temporary effective configs after the
+# stub exits.
 while [[ $# -gt 0 ]]; do
   if [[ "$1" == "--config" && $# -ge 2 ]]; then
     cp "$2" "$TEST_TEMP_DIR/captured-config.jsonc"
+    printf '%s\n' "$2" > "$TEST_TEMP_DIR/captured-config-path.txt"
     break
   fi
   shift
@@ -125,20 +127,39 @@ write_config() {
   printf '%s\n' "$content" > "$TEST_TEMP_DIR/$name"
 }
 
+# Assert the --config path the stub captured is the unique temp file the script
+# created next to the source: it sits in the working dir, ends with
+# `.markdownlint-cli2.jsonc`, and is not the canonical source name.
+assert_unique_temp_config() {
+  local config_path
+  config_path="$(cat "$TEST_TEMP_DIR/captured-config-path.txt")"
+  [[ "$config_path" == ./*markdownlint-cli2.jsonc ]]
+  [[ "$config_path" != ./.markdownlint-cli2.jsonc ]]
+}
+
+# Assert the EXIT trap removed every temp effective config, leaving only the
+# config files the test itself created.
+assert_no_temp_config_leftover() {
+  [ -z "$(find "$TEST_TEMP_DIR" -maxdepth 1 -type f -name "*.markdownlint-cli2.jsonc" ! -name ".markdownlint-cli2.jsonc")" ]
+}
+
 @test "fix mode: injects MD060A into the effective config next to the source" {
   write_config ".markdownlint-cli2.jsonc" '{ "config": { "extends": "@couimet/markdownlint-config" } }'
   run env MODE=fix CONFIG=".markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config ./tmp.markdownlint-cli2.jsonc *.md"
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config"
+  assert_unique_temp_config
   [ "$(jq -r '.config.extends' "$TEST_TEMP_DIR/captured-config.jsonc")" = "@couimet/markdownlint-config" ]
   [ "$(jq -r '.customRules[0]' "$TEST_TEMP_DIR/captured-config.jsonc")" = "markdownlint-rule-force-align-table-columns" ]
+  assert_no_temp_config_leftover
 }
 
 @test "fix mode: auto-discovers the config and injects MD060A" {
   write_config ".markdownlint-cli2.jsonc" '{ "config": {} }'
   run env MODE=fix PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config ./tmp.markdownlint-cli2.jsonc *.md"
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config"
+  assert_unique_temp_config
   [ "$(jq -r '.customRules[0]' "$TEST_TEMP_DIR/captured-config.jsonc")" = "markdownlint-rule-force-align-table-columns" ]
 }
 
@@ -161,7 +182,8 @@ write_config() {
   write_config ".markdownlint.json" '{ "MD013": false }'
   run env MODE=fix CONFIG=".markdownlint.json" PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config ./tmp.markdownlint-cli2.jsonc *.md"
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config"
+  assert_unique_temp_config
   [ "$(jq -r '.config.MD013' "$TEST_TEMP_DIR/captured-config.jsonc")" = "false" ]
   [ "$(jq -r '.customRules[0]' "$TEST_TEMP_DIR/captured-config.jsonc")" = "markdownlint-rule-force-align-table-columns" ]
 }
@@ -177,7 +199,7 @@ write_config() {
   write_config ".markdownlint-cli2.jsonc" '{ "config": {} }'
   run env MODE=fix CONFIG=".markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  [ ! -e "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc" ]
+  assert_no_temp_config_leftover
 }
 
 @test "fix mode: passes JS-module configs through without injection" {
@@ -185,7 +207,7 @@ write_config() {
   run env MODE=fix CONFIG=".markdownlint-cli2.cjs" PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config .markdownlint-cli2.cjs *.md"
-  [ ! -e "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc" ]
+  assert_no_temp_config_leftover
 }
 
 @test "check mode: leaves the config untouched (no MD060A injection)" {
@@ -193,7 +215,7 @@ write_config() {
   run env CONFIG=".markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -Fq "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc *.md"
-  [ ! -e "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc" ]
+  assert_no_temp_config_leftover
   [ ! -e "$TEST_TEMP_DIR/captured-config.jsonc" ] || ! grep -Fq "markdownlint-rule-force-align-table-columns" "$TEST_TEMP_DIR/captured-config.jsonc"
 }
 
@@ -202,5 +224,16 @@ write_config() {
   run env PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
-  [ ! -e "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc" ]
+  assert_no_temp_config_leftover
+}
+
+@test "fix mode: preserves a consumer config named tmp.markdownlint-cli2.jsonc" {
+  write_config "tmp.markdownlint-cli2.jsonc" '{ "config": { "MD013": false } }'
+  run env MODE=fix CONFIG="tmp.markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  # The temp file is unique, so the CONFIG-selected file is never overwritten
+  # or removed: it still exists with its original content after the run.
+  [ -f "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc" ]
+  [ "$(jq -r '.config.MD013' "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc")" = "false" ]
+  [ "$(jq -r '.customRules' "$TEST_TEMP_DIR/tmp.markdownlint-cli2.jsonc")" = "null" ]
 }
