@@ -178,6 +178,35 @@ write_package_json() {
   echo "$output" | grep -q "Version drift"
 }
 
+@test "legacy path: lychee-version action.yml default matches versions.mk -> success" {
+  write_versions_mk "LYCHEE_VERSION := 0.24.2"
+  write_action_yml "validate-links/action.yml" "inputs:
+  lychee-version:
+    default: '0.24.2'"
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="LYCHEE_VERSION validate-links lychee-version" \
+    bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
+@test "legacy path: lychee-version drift between action.yml default and versions.mk -> failure" {
+  write_versions_mk "LYCHEE_VERSION := 9.9.9"
+  write_action_yml "validate-links/action.yml" "inputs:
+  lychee-version:
+    default: '0.24.2'"
+
+  run env \
+    VERSIONS_MK_PATH="$TEST_TEMP_DIR/versions.mk" \
+    ACTION_ROOT="$TEST_TEMP_DIR" \
+    CHECKS="LYCHEE_VERSION validate-links lychee-version" \
+    bash "$SCRIPT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "Version drift"
+}
+
 @test "mixed: npm_package and legacy checks in one run -> success" {
   write_versions_mk "MARKDOWNLINT_VERSION := 0.23.2
 PRETTIER_VERSION := 3.8.4"

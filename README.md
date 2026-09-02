@@ -618,6 +618,24 @@ steps:
       build-command: pnpm compile
 ```
 
+### `validate-links`
+
+Validates that links in Markdown (or any text) files resolve; the step fails when a link is broken or points to a private, link-local, or loopback target. Hidden directories are included in `**` globs (so `.github/` and `.claude/` markdown is covered), and vendored `node_modules` markdown is excluded so the check stays on the project's own docs. Link resolution is backed by [lychee](https://github.com/lycheeverse/lychee) at the pinned version in `versions.mk`.
+
+| Input               | Required | Default   | Description                                                                                                                                                          |
+| ------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lychee-version`    | no       | `0.24.2`  | Version of the underlying lychee link checker to install, in `vX.Y.Z` or `X.Y.Z` form. The default is the pinned `LYCHEE_VERSION` in `versions.mk`; set to override. |
+| `paths`             | no       | `**/*.md` | Space-separated paths or globs to check. Globs are resolved by the checker, not the shell.                                                                           |
+| `working-directory` | no       | `.`       | Directory to run the check in. Set when the target lives in a subdirectory.                                                                                          |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: couimet/github-actions/validate-links@main
+```
+
 ### `validate-yaml`
 
 Validates a YAML file against a JSON Schema file. Uses Python (jsonschema + pyyaml) managed by uv for reproducible dependency resolution. The step fails if the YAML file does not conform to the schema. When `github-token` is provided, a validation failure also posts a sticky PR comment with the error output; the comment persists until a later failure run updates it.

@@ -1,0 +1,30 @@
+name: 'Validate links'
+description: 'Validates that links in the given paths resolve; fails the step when a link is broken or points to a private, link-local, or loopback target.'
+inputs:
+  lychee-version:
+    description: 'Version of the lychee link checker to install, in vX.Y.Z or X.Y.Z form. The default is the pinned LYCHEE_VERSION in versions.mk.'
+    required: false
+    default: '0.24.2'
+  paths:
+    description: 'Space-separated paths or globs to check. Globs are resolved by the checker, not shell-expanded.'
+    required: false
+    default: '**/*.md'
+  working-directory:
+    description: 'Directory to run the check in. Set when the target lives in a subdirectory.'
+    required: false
+    default: '.'
+runs:
+  using: composite
+  steps:
+    - name: Install lychee
+      shell: bash
+      env:
+        LYCHEE_VERSION: ${{ inputs.lychee-version }}
+      run: bash "${{ github.action_path }}/install.sh"
+
+    - name: Validate links
+      shell: bash
+      env:
+        PATHS: ${{ inputs.paths }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      run: bash "${{ github.action_path }}/run.sh"
