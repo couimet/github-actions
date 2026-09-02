@@ -3,6 +3,7 @@
 load test_helper
 
 SCRIPT="$PROJECT_ROOT/markdownlint/lint.sh"
+FALLBACK="$PROJECT_ROOT/markdownlint/node_modules/@couimet/markdownlint-config/index.json"
 
 setup() {
   TEST_TEMP_DIR="$(mktemp -d)"
@@ -40,11 +41,50 @@ teardown() {
 
 # --- lint mode (default) ---
 
-@test "auto-discovery: omits --config when CONFIG is empty" {
+@test "zero-config fallback: applies bundled @couimet config when the repo has none" {
+  run env PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --config $FALLBACK *.md"
+}
+
+@test "zero-config fallback: PATHS unset still applies the bundled config with . default" {
+  run env bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --config $FALLBACK ."
+}
+
+@test "repo config authority: root .markdownlint.json suppresses the fallback" {
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
   run env PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   ! echo "$output" | grep -Fqe "--config"
   echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
+}
+
+@test "repo config authority: root .markdownlint-cli2.yaml (options file) suppresses the fallback" {
+  touch "$TEST_TEMP_DIR/.markdownlint-cli2.yaml"
+  run env PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  ! echo "$output" | grep -Fqe "--config"
+  echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
+}
+
+@test "repo config authority: config nested under WORKING_DIRECTORY suppresses the fallback" {
+  mkdir -p "$TEST_TEMP_DIR/sub"
+  touch "$TEST_TEMP_DIR/sub/.markdownlint.json"
+  run env PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  ! echo "$output" | grep -Fqe "--config"
+  echo "$output" | grep -q "markdownlint-cli2 args: \*.md$"
+}
+
+@test "zero-config fallback: config in the parent of WORKING_DIRECTORY is ignored (cli2 search bound)" {
+  mkdir -p "$TEST_TEMP_DIR/sub"
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
+  run env PATHS="*.md" WORKING_DIRECTORY="sub" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "markdownlint-cli2 pwd: .*/sub$"
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --config $FALLBACK *.md"
 }
 
 @test "explicit config: passes --config when CONFIG is set" {
@@ -53,23 +93,27 @@ teardown() {
   echo "$output" | grep -Fq "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc *.md"
 }
 
+@test "explicit config: CONFIG beats both a present repo config and the fallback" {
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
+  run env CONFIG=".markdownlint-cli2.jsonc" PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --config .markdownlint-cli2.jsonc *.md"
+  ! echo "$output" | grep -Fqe "$FALLBACK"
+}
+
 @test "multi-path: splits PATHS on whitespace into separate arguments" {
   mkdir -p "$TEST_TEMP_DIR/docs"
   touch "$TEST_TEMP_DIR/docs/readme.md"
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
   run env PATHS="*.md docs/*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -Fq "markdownlint-cli2 args: *.md docs/*.md"
 }
 
-@test "PATHS unset: defaults to ." {
-  run env bash "$SCRIPT"
-  [ "$status" -eq 0 ]
-  echo "$output" | grep -q "markdownlint-cli2 args: \.$"
-}
-
 @test "working directory: cds to WORKING_DIRECTORY before running" {
   mkdir -p "$TEST_TEMP_DIR/subdir"
   touch "$TEST_TEMP_DIR/subdir/fixture.md"
+  touch "$TEST_TEMP_DIR/subdir/.markdownlint.json"
   run env PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "markdownlint-cli2 pwd: .*/subdir$"
@@ -78,7 +122,14 @@ teardown() {
 
 # --- fix mode ---
 
-@test "fix mode: passes --fix and omits --config when CONFIG is empty" {
+@test "fix mode: zero-config fallback applies the bundled config" {
+  run env MODE=fix PATHS="*.md" bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -Fq "markdownlint-cli2 args: --fix --config $FALLBACK *.md"
+}
+
+@test "fix mode: repo config suppresses the fallback and passes --fix" {
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
   run env MODE=fix PATHS="*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   ! echo "$output" | grep -Fqe "--config"
@@ -94,12 +145,14 @@ teardown() {
 @test "fix mode: splits PATHS on whitespace into separate arguments" {
   mkdir -p "$TEST_TEMP_DIR/docs"
   touch "$TEST_TEMP_DIR/docs/readme.md"
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
   run env MODE=fix PATHS="*.md docs/*.md" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -Fq "markdownlint-cli2 args: --fix *.md docs/*.md"
 }
 
 @test "fix mode: PATHS unset defaults to ." {
+  touch "$TEST_TEMP_DIR/.markdownlint.json"
   run env MODE=fix bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "markdownlint-cli2 args: --fix \.$"
@@ -108,6 +161,7 @@ teardown() {
 @test "fix mode: cds to WORKING_DIRECTORY before running" {
   mkdir -p "$TEST_TEMP_DIR/subdir"
   touch "$TEST_TEMP_DIR/subdir/fixture.md"
+  touch "$TEST_TEMP_DIR/subdir/.markdownlint.json"
   run env MODE=fix PATHS="*.md" WORKING_DIRECTORY="subdir" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "markdownlint-cli2 pwd: .*/subdir$"

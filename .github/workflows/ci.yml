@@ -64,6 +64,44 @@ jobs:
         shell: bash
         run: rm -rf fix-test
 
+      # $RUNNER_TEMP/mdl-fallback has no .markdownlint*, so these steps prove the
+      # bundled @couimet/markdownlint-config zero-config fallback (MD060 "aligned")
+      # is live: aligned.md must pass and bad.md must fail on MD060, which the
+      # built-in defaults (MD060 "any") would never report. The repo root covers
+      # auto-discovery of the repo's own config via the Lint markdown step above.
+      - name: Create zero-config fallback fixture
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/mdl-fallback"
+          printf '# Aligned\n\n| a    | b    |\n| ---- | ---- |\n| long | val  |\n' > "$RUNNER_TEMP/mdl-fallback/aligned.md"
+          printf '# Misaligned\n\n| a | b |\n| --- | --- |\n| longer | y |\n' > "$RUNNER_TEMP/mdl-fallback/bad.md"
+
+      - name: Test zero-config fallback (aligned table passes)
+        uses: ./markdownlint
+        with:
+          working-directory: ${{ runner.temp }}/mdl-fallback
+          paths: aligned.md
+
+      - name: Test zero-config fallback (misaligned table fails)
+        id: mdl-fallback-bad
+        uses: ./markdownlint
+        continue-on-error: true
+        with:
+          working-directory: ${{ runner.temp }}/mdl-fallback
+          paths: bad.md
+
+      - name: Assert zero-config fallback rejected the misaligned table
+        shell: bash
+        run: |
+          if [[ "${{ steps.mdl-fallback-bad.outcome }}" != "failure" ]]; then
+            echo "expected MD060 aligned check to fail on the misaligned table, got: ${{ steps.mdl-fallback-bad.outcome }}" >&2
+            exit 1
+          fi
+
+      - name: Remove zero-config fallback fixture
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/mdl-fallback"
+
       - name: Check formatting
         uses: ./prettier
 

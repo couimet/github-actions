@@ -1,6 +1,7 @@
 {
   "private": true,
   "devDependencies": {
+    "@couimet/markdownlint-config": ">=0.1.0",
     "markdownlint-cli2": "0.23.2",
     "markdownlint-rule-force-align-table-columns": "^0.1.1"
   }
