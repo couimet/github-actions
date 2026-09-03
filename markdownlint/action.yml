@@ -8,7 +8,7 @@ inputs:
     required: false
     default: ''
   markdownlint-version:
-    description: 'Version of the markdownlint-cli2 npm package to install. When empty, uses the version from the local package.json (Dependabot-tracked). Set to override.'
+    description: 'Version of the markdownlint-cli2 npm package to install. When empty, uses the version from the local package.json (Dependabot-tracked). Set to override. The bundled fallback config and MD060A rule still ship from the action node_modules under an override, so configless enforcement is unchanged.'
     required: false
     default: ''
   mode:

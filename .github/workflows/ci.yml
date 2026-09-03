@@ -102,6 +102,54 @@ jobs:
         shell: bash
         run: rm -rf "$RUNNER_TEMP/mdl-fallback"
 
+      # The markdownlint-version override replaces the default npm-ci install
+      # with a global cli2 install, so drop the action's node_modules first:
+      # this proves the override branch provisions the bundled fallback itself
+      # (its own npm ci) and a configless repo still enforces MD060 "aligned".
+      # 0.23.1 is a real version distinct from the Dependabot-pinned 0.23.2, so
+      # the global install genuinely overrides rather than reusing the pinned
+      # cli2. (Earlier default-path steps left node_modules/.bin on PATH, so the
+      # pinned cli2 may win the version race here; the enforcement assertion
+      # holds either way because it depends only on the fallback being present.)
+      - name: Drop action node_modules to exercise the override path
+        shell: bash
+        run: rm -rf markdownlint/node_modules
+
+      - name: Create zero-config fallback fixture (override)
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/mdl-override"
+          printf '# Aligned\n\n| a    | b    |\n| ---- | ---- |\n| long | val  |\n' > "$RUNNER_TEMP/mdl-override/aligned.md"
+          printf '# Misaligned\n\n| a | b |\n| --- | --- |\n| longer | y |\n' > "$RUNNER_TEMP/mdl-override/bad.md"
+
+      - name: Test override fallback (aligned table passes)
+        uses: ./markdownlint
+        with:
+          markdownlint-version: 0.23.1
+          working-directory: ${{ runner.temp }}/mdl-override
+          paths: aligned.md
+
+      - name: Test override fallback (misaligned table fails)
+        id: mdl-override-bad
+        uses: ./markdownlint
+        continue-on-error: true
+        with:
+          markdownlint-version: 0.23.1
+          working-directory: ${{ runner.temp }}/mdl-override
+          paths: bad.md
+
+      - name: Assert override fallback rejected the misaligned table
+        shell: bash
+        run: |
+          if [[ "${{ steps.mdl-override-bad.outcome }}" != "failure" ]]; then
+            echo "expected MD060 aligned check to fail under the version override, got: ${{ steps.mdl-override-bad.outcome }}" >&2
+            exit 1
+          fi
+
+      - name: Remove zero-config fallback fixture (override)
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/mdl-override"
+
       - name: Check formatting
         uses: ./prettier
 
