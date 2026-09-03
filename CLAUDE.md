@@ -159,7 +159,7 @@
     <action name="shellcheck">Discovers shell scripts (including extensionless) and runs shellcheck</action>
     <action name="test">Runs a test command (default `pnpm test`)</action>
     <action name="typescript-ci">One-step CI orchestrator chaining 12 internal actions (setup, install, format, lint, build, test, coverage, codecov, guards, checks, auto-fix)</action>
-    <action name="validate-links">Validates that links in Markdown (or any text) files resolve; fails the build when a link is broken or points to a private target</action>
+    <action name="validate-links">Validates that links in Markdown (or any text) files resolve; fails the build when a link is broken and, when run on a pull request with a github-token, reports the private, link-local, or loopback targets it excluded from checking</action>
     <action name="validate-yaml">Validates a YAML file against a JSON Schema; posts a comment on failure</action>
   </actions>
   <conventions>

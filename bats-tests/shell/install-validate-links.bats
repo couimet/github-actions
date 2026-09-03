@@ -14,15 +14,19 @@ setup() {
   mkdir -p "$TEST_TEMP_DIR/bin"
   export PATH="$TEST_TEMP_DIR/bin:$PATH"
 
-  # curl writes the -o output file so later steps see the archive present.
-  cat > "$TEST_TEMP_DIR/bin/curl" <<'EOF'
+  # curl writes the -o output file so later steps see the archive present, and
+  # records each requested URL so tests can assert install.sh fetched the
+  # official pinned release asset.
+  cat > "$TEST_TEMP_DIR/bin/curl" <<EOF
 #!/usr/bin/env bash
 prev=""
-for arg in "$@"; do
-  if [[ "$prev" == "-o" && -n "$arg" ]]; then
-    : > "$arg"
+for arg in "\$@"; do
+  if [[ "\$prev" == "-o" && -n "\$arg" ]]; then
+    : > "\$arg"
+  elif [[ "\$arg" == http* ]]; then
+    printf '%s\n' "\$arg" >> "$TEST_TEMP_DIR/curl_urls"
   fi
-  prev="$arg"
+  prev="\$arg"
 done
 EOF
   chmod +x "$TEST_TEMP_DIR/bin/curl"
@@ -71,6 +75,7 @@ EOF
   run bash "$SCRIPT"
   [ "$status" -eq 0 ]
   grep -Fq "$TEST_TEMP_DIR/cache/lychee/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu" "$TEST_TEMP_DIR/github_path"
+  grep -Fqx "https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz" "$TEST_TEMP_DIR/curl_urls"
 }
 
 @test "v-prefixed version is normalized to the lychee-v release tag" {
@@ -78,6 +83,7 @@ EOF
   run env LYCHEE_VERSION="v0.24.2" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   grep -Fq "lychee-v0.24.2" "$TEST_TEMP_DIR/github_path"
+  grep -Fqx "https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz" "$TEST_TEMP_DIR/curl_urls"
 }
 
 @test "already lychee-prefixed version is accepted" {
@@ -85,6 +91,7 @@ EOF
   run env LYCHEE_VERSION="lychee-v0.24.2" bash "$SCRIPT"
   [ "$status" -eq 0 ]
   grep -Fq "lychee-v0.24.2" "$TEST_TEMP_DIR/github_path"
+  grep -Fqx "https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz" "$TEST_TEMP_DIR/curl_urls"
 }
 
 @test "LYCHEE_VERSION unset -> failure" {

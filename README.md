@@ -620,13 +620,14 @@ steps:
 
 ### `validate-links`
 
-Validates that links in Markdown (or any text) files resolve; the step fails when a link is broken or points to a private, link-local, or loopback target. Hidden directories are included in `**` globs (so `.github/` and `.claude/` markdown is covered), and vendored `node_modules` markdown is excluded so the check stays on the project's own docs. Link resolution is backed by [lychee](https://github.com/lycheeverse/lychee) at the pinned version in `versions.mk`.
+Validates that links in Markdown (or any text) files resolve; the step fails when a link is broken. The checker never contacts a private, link-local, or loopback target: hosts in the RFC1918 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), loopback (127.0.0.0/8 and `::1`), link-local (169.254.0.0/16 and `fe80::/10`), unique-local (`fc00::/7`), and the `localhost` hostname are excluded from checking, so docs that reference internal hosts for local development still pass. When a `github-token` is supplied and the action runs on a pull request, it posts an informational comment listing the excluded private, link-local, or loopback URLs it encountered but did not test; on other events it logs them to the step log instead. Hidden directories are included in `**` globs (so `.github/` and `.claude/` markdown is covered), and vendored `node_modules` markdown is excluded so the check stays on the project's own docs. Link resolution is backed by [lychee](https://github.com/lycheeverse/lychee) at the pinned version in `versions.mk`.
 
 | Input               | Required | Default   | Description                                                                                                                                                          |
 | ------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lychee-version`    | no       | `0.24.2`  | Version of the underlying lychee link checker to install, in `vX.Y.Z` or `X.Y.Z` form. The default is the pinned `LYCHEE_VERSION` in `versions.mk`; set to override. |
 | `paths`             | no       | `**/*.md` | Space-separated paths or globs to check. Globs are resolved by the checker, not the shell.                                                                           |
 | `working-directory` | no       | `.`       | Directory to run the check in. Set when the target lives in a subdirectory.                                                                                          |
+| `github-token`      | no       | (empty)   | GitHub token for posting the PR comment listing excluded private, link-local, or loopback targets. Pass `secrets.GITHUB_TOKEN`.                                      |
 
 This action has no outputs; success or failure is reported through the step exit code.
 
@@ -634,6 +635,8 @@ This action has no outputs; success or failure is reported through the step exit
 steps:
   - uses: actions/checkout@v4
   - uses: couimet/github-actions/validate-links@main
+    with:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### `validate-yaml`
