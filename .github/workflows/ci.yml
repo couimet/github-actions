@@ -87,6 +87,9 @@ jobs:
           working-directory: /tmp
           paths: /tmp/test-fix.js
 
+      - name: Validate links
+        uses: ./validate-links
+
       - name: Lint shell scripts
         uses: ./shellcheck
 
