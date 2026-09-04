@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  ci:
+    uses: couimet/github-actions/.github/workflows/typescript-ci-checks.yml@main
+    with:
+      working-directory: .
+
+  shell-ci-checks:
+    uses: couimet/github-actions/.github/workflows/shell-ci-checks.yml@main
+    with:
+      publish-comment: 'false'

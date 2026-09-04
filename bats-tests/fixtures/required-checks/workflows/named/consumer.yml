@@ -1,0 +1,9 @@
+name: TypeScript gate
+
+on:
+  pull_request:
+
+jobs:
+  gate:
+    name: TypeScript Gate
+    uses: couimet/github-actions/.github/workflows/typescript-ci-checks.yml@main
