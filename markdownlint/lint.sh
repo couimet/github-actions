@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run markdownlint-cli2 with optional --config and explicit paths.
+# Run markdownlint-cli2 with optional --config and explicit paths. With no
+# explicit config, the consuming repo's own .markdownlint-cli2.* /
+# .markdownlint.* config stays the authority via cli2 auto-discovery; only when
+# the repo has no such config (in or under WORKING_DIRECTORY, cli2's search
+# bound) does the action fall back to the bundled @couimet/markdownlint-config,
+# which enforces MD060 style "aligned" instead of cli2's built-in defaults.
 #
 # Inputs (env):
 #   MODE               check (default, read-only) or fix (adds --fix)
@@ -14,6 +19,23 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../scripts/_lint-helpers.sh"
 
 cd "${WORKING_DIRECTORY:-.}"
+
+# Mirror markdownlint-cli2's own discovery: a config file found in the working
+# directory or any directory beneath it counts, so the fallback never overrides
+# a config cli2 would resolve for the linted files. cli2 searches each file's
+# ancestors only up to the invocation directory (WORKING_DIRECTORY) and never
+# reads a package.json "markdownlint" key, so configs above it are ignored.
+repo_has_markdownlint_config() {
+  find "$1" \
+    \( -path '*/node_modules/*' -o -path '*/.git/*' \) -prune \
+    -o \( \
+      -name '.markdownlint-cli2.jsonc' -o -name '.markdownlint-cli2.yaml' \
+      -o -name '.markdownlint-cli2.cjs' -o -name '.markdownlint-cli2.mjs' \
+      -o -name '.markdownlint.jsonc' -o -name '.markdownlint.json' \
+      -o -name '.markdownlint.yaml' -o -name '.markdownlint.yml' \
+      -o -name '.markdownlint.cjs' -o -name '.markdownlint.mjs' \
+    \) -print -quit | grep -q .
+}
 
 if [[ "${MODE:-check}" != "check" && "${MODE:-check}" != "fix" ]]; then
   echo "ERROR: MODE must be 'check' or 'fix', got '${MODE}'" >&2
@@ -84,6 +106,20 @@ if [[ "${MODE:-check}" == "fix" ]]; then
   if effective_config="$(prepare_fix_config)"; then
     CONFIG_ARGS=(--config "$effective_config")
     trap 'rm -f "${effective_config:-}"' EXIT
+  fi
+fi
+
+# No explicit config and no repo config: apply the bundled canonical
+# @couimet/markdownlint-config so table alignment (MD060 "aligned") is enforced
+# instead of cli2's built-in defaults, which leave MD060 at "any".
+if [[ -z "${CONFIG:-}" ]] && ! repo_has_markdownlint_config "$PWD"; then
+  FALLBACK_CONFIG="$SCRIPT_DIR/node_modules/@couimet/markdownlint-config/index.json"
+  if [[ -f "$FALLBACK_CONFIG" ]]; then
+    CONFIG_ARGS=(--config "$FALLBACK_CONFIG")
+  else
+    # markdownlint-version override installs -g and no node_modules; keep the
+    # pre-fallback behavior (cli2 built-in defaults) rather than fail on ENOENT.
+    echo "WARNING: no markdownlint config found and the bundled fallback config is unavailable; using cli2 built-in defaults" >&2
   fi
 fi
 

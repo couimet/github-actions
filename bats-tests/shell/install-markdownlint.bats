@@ -40,9 +40,11 @@ NPM
   grep -Fxq "$PROJECT_ROOT/markdownlint/node_modules/.bin" "$TEST_TEMP_DIR/github_path"
 }
 
-@test "MARKDOWNLINT_VERSION set: runs npm install -g markdownlint-cli2@VERSION and does not touch GITHUB_PATH" {
+@test "MARKDOWNLINT_VERSION set: provisions the fallback via npm ci, installs the requested cli2 globally, and does not touch GITHUB_PATH" {
   run env MARKDOWNLINT_VERSION="1.2.3" bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  grep -Fxq "install -g markdownlint-cli2@1.2.3" "$TEST_TEMP_DIR/npm.log"
+  [ "$(wc -l < "$TEST_TEMP_DIR/npm.log")" -eq 2 ]
+  [ "$(sed -n '1p' "$TEST_TEMP_DIR/npm.log")" = "ci" ]
+  [ "$(sed -n '2p' "$TEST_TEMP_DIR/npm.log")" = "install -g markdownlint-cli2@1.2.3" ]
   [ ! -e "$TEST_TEMP_DIR/github_path" ]
 }
