@@ -14,7 +14,8 @@ set -euo pipefail
 # Output: MISSING contexts (produced by the reusable workflows but not yet
 # required) and STALE contexts (required under a bare inner-job name that the
 # reusable workflow now reports under a caller prefix). Exit 1 when either list
-# is non-empty.
+# is non-empty. Exit 2 for operational errors, for example when branch
+# protection cannot be read.
 #
 # Inputs (env):
 #   REPO               owner/repo to inspect (default: derived from origin remote)
@@ -43,7 +44,7 @@ workflow_jobs() {
   case "$1" in
     ci-checks) echo "format lint build test" ;;
     shell-ci-checks) echo "shellcheck bats-test" ;;
-    typescript-ci-checks) echo "format lint markdownlint build test guard-versions check-no-prerelease-deps check-todos auto-fix" ;;
+    typescript-ci-checks) echo "format lint markdownlint build test guard-versions check-no-prerelease-deps check-todos" ;;
     *) return 1 ;;
   esac
 }
@@ -74,7 +75,7 @@ repo_from_remote() {
 # the job's name: when it sets one, else its job id.
 discover_pairs() {
   local file line in_jobs=0 cur_job="" cur_name="" wf
-  for file in "$WORKFLOWS_DIR"/*.yml; do
+  for file in "$WORKFLOWS_DIR"/*.yml "$WORKFLOWS_DIR"/*.yaml; do
     [[ -e "$file" ]] || continue
     while IFS= read -r line; do
       if [[ "$line" =~ ^jobs: ]]; then
@@ -94,7 +95,7 @@ discover_pairs() {
         cur_name="${BASH_REMATCH[1]}"
         continue
       fi
-      if [[ "$line" =~ ^[[:space:]]{4}uses:[[:space:]]+couimet/github-actions/.github/workflows/([A-Za-z0-9_.-]+)\.yml@main ]]; then
+      if [[ "$line" =~ ^[[:space:]]{4}uses:[[:space:]]+couimet/github-actions/.github/workflows/([A-Za-z0-9_.-]+)\.(yml|yaml)@[^[:space:]#]+ ]]; then
         wf="${BASH_REMATCH[1]}"
         if workflow_jobs "$wf" >/dev/null 2>&1 && [[ -n "$cur_job" ]]; then
           printf '%s|%s\n' "${cur_name:-$cur_job}" "$wf"
@@ -203,7 +204,7 @@ if [[ ${#EXPECTED_LINES[@]} -eq 0 ]]; then
   exit 0
 fi
 
-fetch_actual || exit 0
+fetch_actual || exit 2
 
 missing=()
 for ctx in ${EXPECTED_LINES[@]+"${EXPECTED_LINES[@]}"}; do

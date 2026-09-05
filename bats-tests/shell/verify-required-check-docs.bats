@@ -85,7 +85,9 @@ run_guard() {
 @test "README token that is not a workflow job -> failure naming the token" {
   setup_all_match
   # Document a check the ci-checks.yml does not define.
-  sed -i '' 's#^c / beta$#c / beta\nc / nope#' "$TEST_TEMP_DIR/README.md"
+  # Portable rewrite: BSD and GNU sed disagree on `sed -i ''`, so write the
+  # transformed content to a temp file and move it over README.md.
+  sed 's#^c / beta$#c / beta\nc / nope#' "$TEST_TEMP_DIR/README.md" > "$TEST_TEMP_DIR/README.md.tmp" && mv "$TEST_TEMP_DIR/README.md.tmp" "$TEST_TEMP_DIR/README.md"
   run_guard
   [ "$status" -eq 1 ]
   echo "$output" | grep -q "ci-checks"
@@ -99,7 +101,7 @@ run_guard() {
   run_guard
   [ "$status" -eq 0 ]
   # Adding auto-fix to the block must then fail as extra.
-  sed -i '' 's#^t / zeta$#t / zeta\nt / auto-fix#' "$TEST_TEMP_DIR/README.md"
+  sed 's#^t / zeta$#t / zeta\nt / auto-fix#' "$TEST_TEMP_DIR/README.md" > "$TEST_TEMP_DIR/README.md.tmp" && mv "$TEST_TEMP_DIR/README.md.tmp" "$TEST_TEMP_DIR/README.md"
   run_guard
   [ "$status" -eq 1 ]
   echo "$output" | grep -q "typescript-ci-checks"

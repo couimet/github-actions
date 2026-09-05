@@ -7,9 +7,10 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
 
 # The multi fixture mirrors the rabbit-maximizer incident shape: caller job "ci"
 # calls typescript-ci-checks and caller job "shell-ci-checks" calls
-# shell-ci-checks. contexts-matching.txt holds exactly the contexts those two
-# workflows produce; contexts-stale.txt drops the shell-ci-checks contexts (and
-# ci / auto-fix) but keeps bare "shellcheck" and "bats-test" as required.
+# shell-ci-checks. contexts-matching.txt holds the contexts those two workflows
+# produce that a consumer should require (auto-fix is not a merge gate, so it is
+# excluded); contexts-stale.txt drops the shell-ci-checks contexts but keeps
+# bare "shellcheck" and "bats-test" as required.
 
 @test "matching required checks for discovered callers -> success" {
   run env \
@@ -27,7 +28,6 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
     bash "$SCRIPT"
   [ "$status" -eq 1 ]
   echo "$output" | grep -q "MISSING"
-  echo "$output" | grep -q "ci / auto-fix"
   echo "$output" | grep -q "shell-ci-checks / shellcheck"
   echo "$output" | grep -q "shell-ci-checks / bats-test"
   echo "$output" | grep -q "STALE"
@@ -52,7 +52,7 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "TypeScript Gate / format"
   echo "$output" | grep -q "TypeScript Gate / check-todos"
-  [ "$(printf '%s\n' "$output" | grep -c 'TypeScript Gate / ')" -eq 9 ]
+  [ "$(printf '%s\n' "$output" | grep -c 'TypeScript Gate / ')" -eq 8 ]
 }
 
 @test "PRINT_ONLY prints expected contexts sorted and unique without gh" {
@@ -62,10 +62,31 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
     bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "ci / format"
-  echo "$output" | grep -q "ci / auto-fix"
+  ! echo "$output" | grep -q "ci / auto-fix"
   echo "$output" | grep -q "shell-ci-checks / shellcheck"
-  # 9 typescript-ci-checks contexts + 2 shell-ci-checks contexts
-  [ "$(printf '%s\n' "$output" | grep -c ' / ')" -eq 11 ]
+  # 8 typescript-ci-checks contexts + 2 shell-ci-checks contexts
+  [ "$(printf '%s\n' "$output" | grep -c ' / ')" -eq 10 ]
+}
+
+@test "PRINT_ONLY discovers .yaml callers pinned to a commit SHA" {
+  mkdir -p "$TEST_TEMP_DIR/yamlwf"
+  cat > "$TEST_TEMP_DIR/yamlwf/consumer.yaml" <<'EOF'
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  ci:
+    uses: couimet/github-actions/.github/workflows/typescript-ci-checks.yml@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+EOF
+  run env \
+    WORKFLOWS_DIR="$TEST_TEMP_DIR/yamlwf" \
+    PRINT_ONLY=1 \
+    bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "ci / format"
+  echo "$output" | grep -q "ci / check-todos"
 }
 
 @test "DISABLED_JOBS drops toggled-off workflow jobs from the expected set" {
@@ -135,27 +156,3 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
   echo "$output" | grep -q "MOCK_CONTEXTS_FILE not found"
 }
 
-@test "exact missing-check scenario: only auto-fix missing -> failure naming just it" {
-  # Contexts that match everything except ci / auto-fix must list only auto-fix.
-  printf '%s\n' \
-    "ci / format" \
-    "ci / lint" \
-    "ci / markdownlint" \
-    "ci / build" \
-    "ci / test" \
-    "ci / guard-versions" \
-    "ci / check-no-prerelease-deps" \
-    "ci / check-todos" \
-    "shell-ci-checks / shellcheck" \
-    "shell-ci-checks / bats-test" > "$TEST_TEMP_DIR/ctx.txt"
-
-  run env \
-    WORKFLOWS_DIR="$FIXTURES/workflows/multi" \
-    MOCK_CONTEXTS_FILE="$TEST_TEMP_DIR/ctx.txt" \
-    bash "$SCRIPT"
-  [ "$status" -eq 1 ]
-  echo "$output" | grep -q "MISSING"
-  echo "$output" | grep -q "ci / auto-fix"
-  ! echo "$output" | grep -q "ci / format"
-  ! echo "$output" | grep -q "STALE"
-}
