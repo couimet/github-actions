@@ -1,0 +1,10 @@
+ci / format
+ci / lint
+ci / build
+ci / test
+ci / guard-versions
+ci / check-no-prerelease-deps
+ci / check-todos
+ci / markdownlint
+shellcheck
+bats-test
