@@ -664,9 +664,63 @@ steps:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+## Branch protection and reusable workflows
+
+A reusable workflow (`on: workflow_call`) never runs on its own, so it never produces a bare status check. When a job in your workflow calls one, GitHub reports each job inside the reusable workflow as a status check named `{caller job} / {inner job}`: the caller job's `name:` if it sets one, otherwise its job id, joined to the inner job's name-or-id with `/` (spaces around the slash included). None of this repo's reusable workflows names its inner jobs, so the checks they emit use the job ids as written in the workflow files, for example `ci / format` for a caller job `ci`.
+
+Adopting one of the workflows below is therefore a branch-protection change, not just a CI change. If your default branch requires checks by their old names (for example bare `shellcheck` and `bats-test` from previously inline jobs), those contexts stop being reported the moment the reusable workflow runs, and GitHub holds every PR at "Expected — Waiting for status to be reported" even while all reported checks are green. Update the default branch's required checks to the new `{caller job} / {inner job}` names in the same change that adopts the workflow; do not merge the adoption first.
+
+Each workflow section below lists the exact checks it produces for its example caller job. Two things to keep straight when you configure branch protection:
+
+- GitHub matches a required check against the literal context string, spaces around the `/` included. Confirm the exact names from a run on your own PR rather than deriving them from the UI, which may display the caller segment differently from the context string.
+- Jobs you disable with a workflow's boolean inputs (for example `markdownlint: false`) stop reporting, so drop their required checks too or merges block again.
+
+Run [`scripts/required-checks.sh`](./scripts/required-checks.sh) inside a consumer repo to diff its current required checks against the checks these workflows produce before merging.
+
 ## Available workflows
 
 Listed alphabetically.
+
+### `ci-checks`
+
+Reusable workflow for projects that only need four per-command jobs (format, lint, build, test) as separate checks, without the Node/pnpm conveniences of `typescript-ci-checks`. The caller supplies the commands through the required `format`, `lint`, `build`, and `test` inputs; each command runs in its own job.
+
+| Input                  | Required | Default         | Description                                                                                       |
+| ---------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `runs-on`              | no       | `ubuntu-latest` | Runner image for the four jobs.                                                                   |
+| `working-directory`    | no       | `.`             | Directory the check commands run in.                                                              |
+| `setup`                | no       | (empty)         | Command run before the check command in each job (for example `corepack enable`).                 |
+| `format`               | yes      | -               | Format check command.                                                                             |
+| `lint`                 | yes      | -               | Lint command.                                                                                     |
+| `build`                | yes      | -               | Build command.                                                                                    |
+| `test`                 | yes      | -               | Test command.                                                                                     |
+| `build-artifact-paths` | no       | (empty)         | Glob patterns of build output to pass from `build` to `test`; empty disables the upload/download. |
+
+| Secret         | Required | Description                                                            |
+| -------------- | -------- | ---------------------------------------------------------------------- |
+| `github-token` | no       | Optional token exported as `GITHUB_TOKEN` for the four check commands. |
+
+```yaml
+jobs:
+  ci:
+    uses: couimet/github-actions/.github/workflows/ci-checks.yml@main
+    with:
+      format: pnpm format
+      lint: pnpm lint
+      build: pnpm build
+      test: pnpm test
+```
+
+The `test` job depends on `build` (`needs: [build]`), so a failing build surfaces the failure fast while `test` still reports (skipped). Each job appears as a separate check named `{caller job} / {job}`. Required status checks (caller job `ci`):
+
+```text
+ci / format
+ci / lint
+ci / build
+ci / test
+```
+
+Adopting this workflow is a branch-protection change, not just a CI change: if your default branch required these checks under different names, update them in the same change that adopts the workflow. See [Branch protection and reusable workflows](#branch-protection-and-reusable-workflows).
 
 ### `rabbit-maximizer-restacker`
 
@@ -688,7 +742,7 @@ jobs:
     uses: couimet/github-actions/.github/workflows/rabbit-maximizer-restacker.yml@main
 ```
 
-The workflow takes no inputs or secrets; it reads `github.event.pull_request.number` and `github.event.changes.base.ref.from` from the caller's event context.
+The workflow takes no inputs or secrets; it reads `github.event.pull_request.number` and `github.event.changes.base.ref.from` from the caller's event context. This workflow only posts a comment and is not a merge gate: its `restack` job reports a check when it runs, but a consumer should not add it to required checks.
 
 ### `shell-ci-checks`
 
@@ -724,12 +778,14 @@ jobs:
       pull-requests: write
 ```
 
-Each job runs in parallel and appears as a separate check. Exact check names depend on the caller workflow and its job name: GitHub names them `{caller job name} / {called job name}`, so with the `shell-checks` caller above they are:
+Each job runs in parallel and appears as a separate status check named `{caller job} / {job}` (job ids joined by `/`). Required status checks (caller job `shell-checks`):
 
 ```text
 shell-checks / shellcheck
 shell-checks / bats-test
 ```
+
+Adopting this workflow is a branch-protection change: if your default branch requires the bare `shellcheck` and `bats-test` contexts from previously inline jobs, update them to the `shell-checks / ...` names above in the same change or merges stay blocked on the old names. See [Branch protection and reusable workflows](#branch-protection-and-reusable-workflows).
 
 ### `typescript-ci-checks`
 
@@ -787,19 +843,20 @@ jobs:
       auto-fix-command: pnpm format:fix && pnpm lint:fix
 ```
 
-Each job runs in parallel and appears as a separate check:
+Each job runs in parallel and appears as a separate status check named `{caller job} / {job}`. Required status checks (caller job `ci`):
 
 ```text
-CI / format
-CI / lint
-CI / build
-CI / test
-CI / guard-versions
-CI / check-no-prerelease-deps
-CI / check-todos
+ci / format
+ci / lint
+ci / markdownlint
+ci / build
+ci / test
+ci / guard-versions
+ci / check-no-prerelease-deps
+ci / check-todos
 ```
 
-Toggle off individual jobs with their boolean inputs (e.g., `guard-versions: false`). The `coverage-comment` step inside the test job only runs on `pull_request` events. Coverage is uploaded to Codecov by default; set `codecov-upload: false` to disable.
+The `auto-fix` job also reports a check, but only on the fix run after a format or lint failure when `auto-fix-command` is set, so it is not a merge-gate context and is not listed above. Toggle off a job with its boolean input (e.g., `guard-versions: false`) and drop its required check too, or merges block again. Adopting this workflow is a branch-protection change: see [Branch protection and reusable workflows](#branch-protection-and-reusable-workflows). The `coverage-comment` step inside the test job only runs on `pull_request` events. Coverage is uploaded to Codecov by default; set `codecov-upload: false` to disable.
 
 ## Development
 

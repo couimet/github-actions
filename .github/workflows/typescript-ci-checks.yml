@@ -1,3 +1,8 @@
+# Adopting this reusable workflow is a branch-protection change, not just a CI
+# change: each job below reports as a status check named "{caller job} / {job}"
+# (job ids joined by " / "), so update the default branch's required checks to
+# those names in the same change that adopts it. See the README "Branch
+# protection and reusable workflows" section for the exact check names.
 name: TypeScript CI Checks
 
 on:
