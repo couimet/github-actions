@@ -68,6 +68,28 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
   [ "$(printf '%s\n' "$output" | grep -c ' / ')" -eq 10 ]
 }
 
+@test "PRINT_ONLY discovers local ./ reusable-workflow callers" {
+  run env \
+    WORKFLOWS_DIR="$FIXTURES/workflows/local" \
+    PRINT_ONLY=1 \
+    bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "ci / format"
+  ! echo "$output" | grep -q "ci / auto-fix"
+  echo "$output" | grep -q "shell-ci-checks / shellcheck"
+  # 8 typescript-ci-checks contexts + 2 shell-ci-checks contexts
+  [ "$(printf '%s\n' "$output" | grep -c ' / ')" -eq 10 ]
+}
+
+@test "local reusable-workflow callers' branch-protection contexts are diffed" {
+  run env \
+    WORKFLOWS_DIR="$FIXTURES/workflows/local" \
+    MOCK_CONTEXTS_FILE="$FIXTURES/contexts-matching.txt" \
+    bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "OK"
+}
+
 @test "PRINT_ONLY discovers .yaml callers pinned to a commit SHA" {
   mkdir -p "$TEST_TEMP_DIR/yamlwf"
   cat > "$TEST_TEMP_DIR/yamlwf/consumer.yaml" <<'EOF'

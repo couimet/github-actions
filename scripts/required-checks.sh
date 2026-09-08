@@ -95,8 +95,9 @@ discover_pairs() {
         cur_name="${BASH_REMATCH[1]}"
         continue
       fi
-      if [[ "$line" =~ ^[[:space:]]{4}uses:[[:space:]]+couimet/github-actions/.github/workflows/([A-Za-z0-9_.-]+)\.(yml|yaml)@[^[:space:]#]+ ]]; then
-        wf="${BASH_REMATCH[1]}"
+      # Accept a remote owner/repo reference or a ref-less local ./ reference.
+      if [[ "$line" =~ ^[[:space:]]{4}uses:[[:space:]]+(\./\.github/workflows/|couimet/github-actions/\.github/workflows/)([A-Za-z0-9_.-]+)\.(yml|yaml)(@[^[:space:]#]+)? ]]; then
+        wf="${BASH_REMATCH[2]}"
         if workflow_jobs "$wf" >/dev/null 2>&1 && [[ -n "$cur_job" ]]; then
           printf '%s|%s\n' "${cur_name:-$cur_job}" "$wf"
         fi

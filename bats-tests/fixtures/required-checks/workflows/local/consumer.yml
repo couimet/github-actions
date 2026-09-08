@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/typescript-ci-checks.yml
+    with:
+      working-directory: .
+
+  shell-ci-checks:
+    uses: ./.github/workflows/shell-ci-checks.yml
+    with:
+      publish-comment: 'false'
