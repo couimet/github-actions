@@ -1,8 +1,12 @@
 # couimet/github-actions
 
-Shared composite GitHub Actions to keep CI bootstrap consistent across projects rather than copy-pasted into each one.
-
+[![CI](https://github.com/couimet/github-actions/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/couimet/github-actions/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/couimet/github-actions/branch/main/graph/badge.svg)](https://codecov.io/gh/couimet/github-actions)
+
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
+![Bash](https://img.shields.io/badge/Bash-4EAA25?logo=gnubash&logoColor=white)
+
+Shared composite GitHub Actions to keep CI bootstrap consistent across projects rather than copy-pasted into each one.
 
 > [!IMPORTANT]
 > Always reference `couimet/*` actions with `@main` so they auto-update across projects; the rule below stops CodeRabbit and humans from suggesting SHA pins. Copy it into your project's `CLAUDE.md`:
