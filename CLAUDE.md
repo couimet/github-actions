@@ -155,6 +155,7 @@
     <action name="prettier">Installs Prettier at a pinned version and checks or fixes formatting against the repo config</action>
     <action name="publish-pr-comment">Posts a sticky PR comment; thin wrapper around marocchino/sticky-pull-request-comment</action>
     <action name="request-coderabbit-full-review">Posts a @coderabbitai full review comment to trigger a fresh CodeRabbit review</action>
+    <action name="setup-mise">Thin wrapper around jdx/mise-action; installs mise and the tools pinned in the repo mise.toml</action>
     <action name="setup-node-pnpm">Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack</action>
     <action name="shellcheck">Discovers shell scripts (including extensionless) and runs shellcheck</action>
     <action name="test">Runs a test command (default `pnpm test`)</action>

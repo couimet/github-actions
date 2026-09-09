@@ -21,9 +21,10 @@ We follow the format from [adr.github.io](https://adr.github.io/):
 
 ## ADRs
 
-| #                                           | Title                     | Status   |
-| ------------------------------------------- | ------------------------- | -------- |
-| [0001](./0001-monorepo-tagging-strategy.md) | Monorepo Tagging Strategy | Proposed |
+| #                                                    | Title                                  | Status   |
+| ---------------------------------------------------- | -------------------------------------- | -------- |
+| [0001](./0001-monorepo-tagging-strategy.md)          | Monorepo Tagging Strategy              | Proposed |
+| [0002](./0002-mise-development-tool-provisioning.md) | mise for Development Tool Provisioning | Accepted |
 
 ## Future ADRs
 

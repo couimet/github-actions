@@ -32,7 +32,9 @@ while IFS= read -r action_yml; do
 
   # Extract every uses: line from the action file. Only lines with a
   # full 40-char hex SHA after @ are validated; local paths (./) and
-  # branch/tag refs are silently skipped.
+  # branch/tag refs are silently skipped. The leading "- " is optional: a
+  # composite step usually indents uses: under a "- name:" line, so requiring
+  # it would skip every real pin in this repo.
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
 
@@ -58,7 +60,7 @@ while IFS= read -r action_yml; do
       echo "::error::SHA ${sha} not found in ${repo} (pinned in ${action_yml}). The upstream repo may have force-pushed; update the pin to a current SHA."
       missing=$((missing + 1))
     fi
-  done < <(grep -E '^[[:space:]]*-[[:space:]]*uses:[[:space:]]+[^[:space:]]+@[0-9a-f]{40}' "$action_yml")
+  done < <(grep -E '^[[:space:]]*(-[[:space:]]*)?uses:[[:space:]]+[^[:space:]]+@[0-9a-f]{40}' "$action_yml")
 done <<< "$action_files"
 
 if (( missing )); then

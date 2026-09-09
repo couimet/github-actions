@@ -7,6 +7,7 @@ check: lint test check-actions
 check-actions:
 	bash scripts/verify-action-coverage.sh
 	bash scripts/verify-version-pins.sh
+	bash scripts/generate-mise-toml.sh --check
 	bash scripts/verify-action-shas.sh
 	bash scripts/verify-no-relative-uses.sh
 	bash scripts/verify-ci-checks-secrets.sh
@@ -20,13 +21,24 @@ format:
 	npx --yes prettier@$(PRETTIER_VERSION) --write .
 
 install-prereqs:
-	@ok=true; \
-	command -v node >/dev/null 2>&1 || { echo "Missing: node — install it: brew install node@24"; ok=false; }; \
-	command -v bats >/dev/null 2>&1 || { echo "Missing: bats — install it: brew install bats-core"; ok=false; }; \
-	command -v shellcheck >/dev/null 2>&1 || { echo "Missing: shellcheck — install it: brew install shellcheck"; ok=false; }; \
-	command -v uv >/dev/null 2>&1 || { echo "Missing: uv — install it: brew install uv"; ok=false; }; \
-	command -v jq >/dev/null 2>&1 || { echo "Missing: jq — install it: brew install jq"; ok=false; }; \
-	$$ok || { echo; echo "Install the missing prerequisites above, then re-run make install-prereqs."; exit 1; }
+	@command -v mise >/dev/null 2>&1 || { \
+		echo "Missing: mise — install it: https://mise.jdx.dev/getting-started.html"; \
+		echo; \
+		echo "Then re-run make install-prereqs."; \
+		exit 1; \
+	}
+	@mise install
+	@missing=""; \
+	for tool in node bats shellcheck uv jq; do \
+		command -v $$tool >/dev/null 2>&1 || missing="$$missing $$tool"; \
+	done; \
+	[ -z "$$missing" ] || { \
+		echo "mise is installed, but these tools do not resolve on PATH:$$missing"; \
+		echo; \
+		echo "Activate mise in your shell so its shims win, then re-run make install-prereqs."; \
+		echo "See https://mise.jdx.dev/getting-started.html"; \
+		exit 1; \
+	}
 
 lint: install-prereqs lint-md fmt-check lint-sh
 

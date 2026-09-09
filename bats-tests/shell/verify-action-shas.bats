@@ -168,6 +168,40 @@ EOF
   echo "$output" | grep -q "All 2 pinned SHA(s) verified"
 }
 
+@test "indented uses: under a step name is discovered" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - name: Do the thing
+      uses: owner/repo@${SHA1}
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 1 pinned SHA(s) verified"
+}
+
+@test "missing SHA on an indented uses: line -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - name: Do the thing
+      uses: owner/repo@${SHA2}
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "::error::SHA ${SHA2} not found"
+}
+
 @test "commented uses: lines are ignored" {
   echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
 
