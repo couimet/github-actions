@@ -117,7 +117,7 @@ runs:
   using: composite
   steps:
     - uses: ./local-action
-    - uses: owner/repo@main
+    - uses: couimet/github-actions/publish-pr-comment@main
 EOF
 
   run_script
@@ -255,4 +255,137 @@ EOF
   run_script
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "All 1 pinned SHA(s) verified"
+}
+
+# --- ref policy (CI001 / CI002) ---
+
+@test "third-party branch ref -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@main
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references owner/repo@main"
+  echo "$output" | grep -q "Pin third-party actions to a full 40-character commit SHA"
+}
+
+@test "third-party tag ref -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@v4
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references owner/repo@v4"
+  echo "$output" | grep -q "Pin third-party actions to a full 40-character commit SHA"
+}
+
+@test "first-party SHA pin -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: couimet/github-actions/publish-pr-comment@${SHA1}
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "Internal actions must use @main"
+}
+
+@test "first-party @main ref -> success" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@${SHA1}
+    - uses: couimet/github-actions/publish-pr-comment@main
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 1 pinned SHA(s) verified"
+}
+
+@test "workflow with a floating third-party ref -> failure" {
+  mkdir -p "$TEST_TEMP_DIR/.github/workflows"
+  cat > "$TEST_TEMP_DIR/.github/workflows/ci.yml" <<'EOF'
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references actions/checkout@v4"
+}
+
+@test "workflow with a pinned SHA is verified, local paths skipped" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  mkdir -p "$TEST_TEMP_DIR/.github/workflows"
+  cat > "$TEST_TEMP_DIR/.github/workflows/ci.yml" <<EOF
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@${SHA1}
+      - uses: ./setup-mise
+      - uses: ./.github/workflows/reusable.yml
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 1 pinned SHA(s) verified"
+}
+
+@test "action.yml and workflow violations are both reported" {
+  mkdir -p "$TEST_TEMP_DIR/.github/workflows"
+  cat > "$TEST_TEMP_DIR/.github/workflows/ci.yml" <<'EOF'
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v4
+EOF
+
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@main
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references owner/repo@main"
+  echo "$output" | grep -q "references actions/cache@v4"
+  echo "$output" | grep -q "::error::2 uses: reference(s) violate the pinning rules"
 }
