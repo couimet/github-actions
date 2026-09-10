@@ -169,6 +169,7 @@
     - typescript-ci is the only orchestrator action; all other actions are leaf steps
     - Reusable workflows compose leaf actions into per-job checks for per-step CI visibility
     - README structure: `## Available actions` documents composite actions alphabetically; `## Available workflows` documents reusable workflows alphabetically. New entries go in the section matching their type, sorted alphabetically within it
+    - README usage examples keep floating major-version refs (e.g. `actions/checkout@v4`) so they stay light for consumers. CI001-CI002 govern this repo's own action.yml and .github/workflows files, which scripts/verify-action-shas.sh scans, not the README examples
     - Context dirs: bats-tests/ holds this repo's own suites (default test-directory for consuming repos), scripts/ has verify helpers run by make check-actions, tests/ is the Jest fixture used in CI; reusable workflows live in .github/workflows/
   </conventions>
 </project-context>

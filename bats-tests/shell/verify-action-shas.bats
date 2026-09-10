@@ -49,6 +49,9 @@ SHA1="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 SHA2="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 SHA3="cccccccccccccccccccccccccccccccccccccccc"
 
+# sha256 digest: SHA1 is 40 hex chars, so 24 more make the required 64.
+DIGEST="sha256:${SHA1}aaaaaaaaaaaaaaaaaaaaaaaa"
+
 # --- tests ---
 
 @test "all SHAs valid -> success" {
@@ -388,4 +391,90 @@ EOF
   echo "$output" | grep -q "references owner/repo@main"
   echo "$output" | grep -q "references actions/cache@v4"
   echo "$output" | grep -q "::error::2 uses: reference(s) violate the pinning rules"
+}
+
+# --- Docker ref policy ---
+
+@test "docker image tag ref -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: docker://alpine:3.18
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references docker://alpine:3.18"
+  echo "$output" | grep -q "Pin Docker images by digest"
+}
+
+@test "docker image with no tag -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: docker://alpine
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references docker://alpine"
+  echo "$output" | grep -q "Pin Docker images by digest"
+}
+
+@test "quoted docker image tag -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: "docker://alpine:3.18"
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "references docker://alpine:3.18"
+  echo "$output" | grep -q "Pin Docker images by digest"
+}
+
+@test "docker image with a truncated digest -> failure" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: docker://ghcr.io/owner/img@sha256:abc123
+EOF
+
+  run_script
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "Pin Docker images by digest"
+}
+
+@test "digest-pinned docker image -> accepted and reported as unverified" {
+  echo "$SHA1" > "$TEST_TEMP_DIR/valid-shas.txt"
+
+  mkdir -p "$TEST_TEMP_DIR/.github/workflows"
+  cat > "$TEST_TEMP_DIR/.github/workflows/ci.yml" <<EOF
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@${SHA1}
+      - uses: docker://ghcr.io/owner/img@${DIGEST}
+EOF
+
+  run_script
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "All 1 pinned SHA(s) verified"
+  echo "$output" | grep -q "1 Docker image digest(s) accepted without remote verification"
 }

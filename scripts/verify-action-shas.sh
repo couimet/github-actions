@@ -3,13 +3,17 @@ set -euo pipefail
 
 # Verify every uses: reference in this repo's composite actions and workflows.
 #
-# Two rules are enforced:
+# Three rules are enforced:
 #   - CI001: third-party actions must be pinned to a full 40-char commit SHA,
 #     never a branch or tag.
 #   - CI002: couimet/github-actions/* refs must ride @main, never a commit SHA.
+#   - Docker images must be pinned to a digest (docker://image@sha256:<digest>),
+#     never a tag: an image has no commit SHA for CI001 to test.
 #
-# Every surviving pin is then resolved on the remote, so an upstream
+# Every surviving commit-SHA pin is then resolved on the remote, so an upstream
 # force-push that invalidates a pin fails here rather than in a consumer's CI.
+# An accepted Docker digest gets no remote check: a registry is not a GitHub
+# repository, so gh api cannot resolve it.
 #
 # Inputs (env):
 #   ACTION_ROOT  dir containing action subdirectories (default: <repo_root>)
@@ -43,20 +47,21 @@ fi
 missing=0
 checked=0
 violations=0
+digests=0
 
 while IFS= read -r scan_file; do
   [[ -z "$scan_file" ]] && continue
 
-  # Extract every uses: line that carries an @ ref. A line without one is a
-  # local ./ or ../ path and needs no validation. The leading "- " is
-  # optional: a step usually indents uses: under a "- name:" line, so
-  # requiring it would skip every real pin in this repo.
+  # Extract every uses: value. A value with no @ is still scanned, because a
+  # Docker image is pinned by digest and a bare image name carries none. The
+  # leading "- " is optional: a step usually indents uses: under a "- name:"
+  # line, so requiring it would skip every real pin in this repo.
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
 
-    # Pull out "owner/repo@<ref>" from a uses: line. The capture stops at
-    # whitespace, so a trailing YAML comment is dropped with it.
-    ref="$(echo "$line" | sed -n 's/.*uses:[[:space:]]*\([^[:space:]]*@[^[:space:]]*\).*/\1/p')"
+    # Pull out the uses: value. The capture stops at whitespace, so a trailing
+    # YAML comment is dropped with it.
+    ref="$(echo "$line" | sed -n 's/.*uses:[[:space:]]*\([^[:space:]]*\).*/\1/p')"
     [[ -z "$ref" ]] && continue
     # Strip optional surrounding quotes (single or double) that YAML
     # allows on string values, so the ref stays a clean owner/repo@ref.
@@ -66,6 +71,26 @@ while IFS= read -r scan_file; do
     # Local paths resolve inside the consuming workspace, so neither pin rule
     # applies to them.
     if [[ "$ref" == ./* || "$ref" == ../* ]]; then
+      continue
+    fi
+
+    # A Docker image has no commit SHA, so CI001's 40-hex test cannot express
+    # its pin. The immutable form is a registry digest; a tag, including the
+    # implicit :latest of a bare image name, stays mutable.
+    if [[ "$ref" == docker://* ]]; then
+      if [[ ! "$ref" =~ @sha256:[0-9a-f]{64}$ ]]; then
+        echo "::error::${scan_file} references ${ref}. Pin Docker images by digest (docker://image@sha256:<digest>), not a tag."
+        violations=$((violations + 1))
+        continue
+      fi
+      # A registry is not a GitHub repository, so gh api cannot resolve a
+      # digest. Count it and leave remote resolution to the commit-SHA pins.
+      digests=$((digests + 1))
+      continue
+    fi
+
+    # Neither local, nor Docker, nor containing an @: nothing to classify.
+    if [[ "$ref" != *@* ]]; then
       continue
     fi
 
@@ -100,11 +125,11 @@ while IFS= read -r scan_file; do
       echo "::error::SHA ${pin} not found in ${repo} (pinned in ${scan_file}). The upstream repo may have force-pushed; update the pin to a current SHA."
       missing=$((missing + 1))
     fi
-  done < <(grep -E '^[[:space:]]*(-[[:space:]]*)?uses:[[:space:]]+[^[:space:]#]+@' "$scan_file")
+  done < <(grep -E '^[[:space:]]*(-[[:space:]]*)?uses:[[:space:]]+["'"'"']?[^[:space:]#]+' "$scan_file")
 done <<< "$(printf '%s\n%s\n' "$action_files" "$workflow_files" | grep -v '^$' | sort)"
 
 if (( violations )); then
-  echo "::error::${violations} uses: reference(s) violate the pinning rules. Third-party actions need a full commit SHA; couimet/github-actions actions need @main."
+  echo "::error::${violations} uses: reference(s) violate the pinning rules. Third-party actions need a full commit SHA; couimet/github-actions actions need @main; Docker images need a @sha256 digest."
 fi
 
 if (( missing )); then
@@ -116,4 +141,9 @@ if (( violations || missing )); then
 fi
 
 echo "All ${checked} pinned SHA(s) verified."
+
+if (( digests )); then
+  echo "${digests} Docker image digest(s) accepted without remote verification."
+fi
+
 exit 0

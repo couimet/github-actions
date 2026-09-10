@@ -44,7 +44,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: true
       ref: ${{ github.event.pull_request.head.ref }}
@@ -88,7 +88,7 @@ When `publish-comment` is false, no outputs are set; success or failure is repor
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/bats-test@main
@@ -110,7 +110,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -134,7 +134,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -157,7 +157,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/check-no-prerelease-deps@main
@@ -180,7 +180,7 @@ Counts `TODO` and `FIXME` comments across a configurable set of file extensions.
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
       fetch-depth: 0
@@ -189,7 +189,7 @@ steps:
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
       fetch-depth: 0
@@ -214,7 +214,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -239,7 +239,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/test@main
@@ -269,7 +269,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -292,7 +292,7 @@ Outputs whether the head commit subject matches a configured auto-fix commit mes
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
   - uses: couimet/github-actions/detect-auto-fix-commit@main
     id: guard
     with:
@@ -312,7 +312,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -334,7 +334,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
       fetch-depth: 0
@@ -355,7 +355,7 @@ Restores the pnpm store from cache and runs `pnpm install --frozen-lockfile`.
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -375,7 +375,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -401,7 +401,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
   - uses: couimet/github-actions/markdownlint@main
 ```
 
@@ -421,7 +421,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/prettier@main
@@ -445,7 +445,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - name: Build comment body
@@ -477,7 +477,7 @@ The consuming workflow's job needs `pull-requests: write` in its `permissions:` 
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/request-coderabbit-full-review@main
@@ -501,7 +501,7 @@ Installs [mise](https://mise.jdx.dev/) and the tools pinned in the consuming rep
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-mise@main
@@ -523,7 +523,7 @@ Installs Node.js (reading the version from the consuming repo's `.nvmrc` unless 
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -544,7 +544,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/shellcheck@main
@@ -563,7 +563,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
@@ -597,7 +597,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/typescript-ci@main
@@ -607,7 +607,7 @@ To enable auto-fix, check out the PR head ref with persisted credentials (the jo
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: true
       ref: ${{ github.event.pull_request.head.ref }}
@@ -631,7 +631,7 @@ When a command doesn't match the `pnpm <name>` convention, use the override inpu
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/typescript-ci@main
@@ -654,7 +654,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
   - uses: couimet/github-actions/validate-links@main
     with:
       github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -675,7 +675,7 @@ This action has no outputs; success or failure is reported through the step exit
 
 ```yaml
 steps:
-  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+  - uses: actions/checkout@v4
     with:
       persist-credentials: false
   - uses: couimet/github-actions/validate-yaml@main
