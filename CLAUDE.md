@@ -155,6 +155,7 @@
     <action name="prettier">Installs Prettier at a pinned version and checks or fixes formatting against the repo config</action>
     <action name="publish-pr-comment">Posts a sticky PR comment; thin wrapper around marocchino/sticky-pull-request-comment</action>
     <action name="request-coderabbit-full-review">Posts a @coderabbitai full review comment to trigger a fresh CodeRabbit review</action>
+    <action name="setup-mise">Thin wrapper around jdx/mise-action; installs mise and the tools pinned in the repo mise.toml</action>
     <action name="setup-node-pnpm">Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack</action>
     <action name="shellcheck">Discovers shell scripts (including extensionless) and runs shellcheck</action>
     <action name="test">Runs a test command (default `pnpm test`)</action>
@@ -168,6 +169,7 @@
     - typescript-ci is the only orchestrator action; all other actions are leaf steps
     - Reusable workflows compose leaf actions into per-job checks for per-step CI visibility
     - README structure: `## Available actions` documents composite actions alphabetically; `## Available workflows` documents reusable workflows alphabetically. New entries go in the section matching their type, sorted alphabetically within it
+    - README usage examples keep floating major-version refs (e.g. `actions/checkout@v4`) so they stay light for consumers. CI001-CI002 govern this repo's own action.yml and .github/workflows files, which scripts/verify-action-shas.sh scans, not the README examples
     - Context dirs: bats-tests/ holds this repo's own suites (default test-directory for consuming repos), scripts/ has verify helpers run by make check-actions, tests/ is the Jest fixture used in CI; reusable workflows live in .github/workflows/
   </conventions>
 </project-context>

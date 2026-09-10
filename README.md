@@ -490,6 +490,23 @@ steps:
         }
 ```
 
+### `setup-mise`
+
+Installs [mise](https://mise.jdx.dev/) and the tools pinned in the consuming repo's `mise.toml`. Thin wrapper around [jdx/mise-action](https://github.com/jdx/mise-action) so repos avoid duplicating the version pin and wiring across CI pipelines.
+
+| Input     | Required | Default | Description                                               |
+| --------- | -------- | ------- | --------------------------------------------------------- |
+| `install` | no       | `true`  | Run `mise install` for the tools declared in `mise.toml`. |
+| `cache`   | no       | `true`  | Read and write the tool cache between runs.               |
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-mise@main
+```
+
 ### `setup-node-pnpm`
 
 Installs Node.js (reading the version from the consuming repo's `.nvmrc` unless overridden) and activates pnpm via Corepack from the consuming repo's `package.json` `packageManager` field.
@@ -864,17 +881,19 @@ The `auto-fix` job also reports a check, but only on the fix run after a format 
 
 ## Development
 
-| Target                 | What                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `make check`           | Run `lint`, `test`, and `check-actions` — the same gate CI runs on push.                            |
-| `make fmt-check`       | Check formatting with Prettier; exits non-zero if any file needs formatting.                        |
-| `make format`          | Apply Prettier formatting to all supported files.                                                   |
-| `make install-prereqs` | Check that required system tools are installed and print install instructions for any missing tool. |
-| `make lint`            | Run `lint-md`, `fmt-check`, and `lint-sh`.                                                          |
-| `make lint-fix`        | Run `lint-md-fix` and `format`.                                                                     |
-| `make test`            | Run BATS shell tests.                                                                               |
+Development tools are provisioned with [mise](https://mise.jdx.dev/). Install mise, run `mise install` once to fetch the pinned tool set, and keep mise active in your shell so its shims resolve the tools we need. The tool set is declared in `mise.toml`, which is generated from `.nvmrc` and `versions.mk` by `scripts/generate-mise-toml.sh`; run that script after changing either source instead of editing `mise.toml` by hand.
 
-Fine-grained targets (`check-actions`, `lint-md`, `lint-md-fix`, `lint-sh`) are available for individual tool runs. Run `make install-prereqs` to verify your dev environment before `make check`.
+| Target                 | What                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `make check`           | Run `lint`, `test`, and `check-actions` — the same gate CI runs on push.               |
+| `make fmt-check`       | Check formatting with Prettier; exits non-zero if any file needs formatting.           |
+| `make format`          | Apply Prettier formatting to all supported files.                                      |
+| `make install-prereqs` | Install the mise-managed dev tools via `mise install` and verify they resolve on PATH. |
+| `make lint`            | Run `lint-md`, `fmt-check`, and `lint-sh`.                                             |
+| `make lint-fix`        | Run `lint-md-fix` and `format`.                                                        |
+| `make test`            | Run BATS shell tests.                                                                  |
+
+Fine-grained targets (`check-actions`, `lint-md`, `lint-md-fix`, `lint-sh`) are available for individual tool runs. Run `make install-prereqs` to fetch and verify your dev environment before `make check`; `make check-actions` also fails when `mise.toml` has drifted from its sources.
 
 ## Versioning
 

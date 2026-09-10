@@ -1,0 +1,21 @@
+name: 'Setup mise'
+description: 'Installs mise and the tools pinned in the repo mise.toml. Thin wrapper around jdx/mise-action so repos avoid duplicating the version pin and wiring across CI pipelines.'
+
+inputs:
+  install:
+    description: 'Run `mise install` for the tools declared in mise.toml. Passed through to jdx/mise-action.'
+    required: false
+    default: 'true'
+  cache:
+    description: 'Read and write the tool cache between runs. Passed through to jdx/mise-action.'
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Install mise and the pinned tools
+      uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c
+      with:
+        install: ${{ inputs.install }}
+        cache: ${{ inputs.cache }}

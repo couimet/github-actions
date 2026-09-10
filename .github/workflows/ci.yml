@@ -19,6 +19,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup mise
+        uses: ./setup-mise
+
+      # Runs the mise.toml generator and fails if the committed file drifts
+      # from .nvmrc and versions.mk. PR-only so the sticky comment has a PR to
+      # land on; push runs are covered by `make check-actions` below.
+      - name: Check mise.toml drift
+        if: github.event_name == 'pull_request'
+        uses: ./check-generated-drift
+        with:
+          command: bash scripts/generate-mise-toml.sh
+          github-token: ${{ github.token }}
+
       - name: Verify action coverage
         run: make check-actions
 
