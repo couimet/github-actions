@@ -282,3 +282,41 @@ EOF
   [[ "$output" == *'GITHUB_TOKEN: ${{ inputs.github-token }}'* ]]
   [[ "$output" == *'bash "${{ github.action_path }}/validate.sh"'* ]]
 }
+
+@test "action.yml: install step delegates to setup-bats with all five install inputs relayed" {
+  run sed -n '/- name: Install BATS/,/detik-install/p' "$PROJECT_ROOT/bats-test/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'uses: couimet/github-actions/setup-bats@main'* ]]
+  [[ "$output" == *'bats-version: ${{ inputs.bats-version }}'* ]]
+  [[ "$output" == *'support-install: ${{ inputs.support-install }}'* ]]
+  [[ "$output" == *'assert-install: ${{ inputs.assert-install }}'* ]]
+  [[ "$output" == *'file-install: ${{ inputs.file-install }}'* ]]
+  [[ "$output" == *'detik-install: ${{ inputs.detik-install }}'* ]]
+}
+
+# setup-bats owns the bats-core ref, so bats-test must not carry a second copy.
+# A duplicate pin is what the extraction exists to prevent, and CI001's remote
+# SHA resolution would then have two places to keep in step. The description
+# line may still name the action in prose; only a uses: line is a pin.
+@test "action.yml: bats-test no longer pins bats-core directly" {
+  run grep -c "uses: bats-core/bats-action" "$PROJECT_ROOT/bats-test/action.yml"
+  [ "$output" = "0" ]
+}
+
+# The misses are collected rather than asserted inside the loop: a bare [[ ]]
+# in a loop body reports only the last iteration's status, so an earlier
+# mismatch would pass unnoticed.
+@test "action.yml: setup-bats pins bats-core and relays all five install inputs" {
+  run cat "$PROJECT_ROOT/setup-bats/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'uses: bats-core/bats-action@'* ]]
+  local input
+  local missing=()
+  for input in bats-version support-install assert-install file-install detik-install; do
+    [[ "$output" == *"${input}: \${{ inputs.${input} }}"* ]] || missing+=("$input")
+  done
+  if [[ "${#missing[@]}" -gt 0 ]]; then
+    echo "not relayed: ${missing[*]}" >&2
+    return 1
+  fi
+}

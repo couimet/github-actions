@@ -490,6 +490,30 @@ steps:
         }
 ```
 
+### `setup-bats`
+
+Installs [BATS](https://github.com/bats-core/bats-core) and its helper libraries. Thin wrapper around [bats-core/bats-action](https://github.com/bats-core/bats-action) pinned to a commit SHA, so `bats-test` and `shell-coverage` share one pin instead of duplicating the install step. Adopt it directly only when you need BATS without either action.
+
+The `bats-version` default tracks the local brew stable, so a CI run and a local run use the same BATS release.
+
+| Input             | Required | Default  | Description                                                                               |
+| ----------------- | -------- | -------- | ----------------------------------------------------------------------------------------- |
+| `assert-install`  | no       | `true`   | Install the `bats-assert` helper library.                                                 |
+| `bats-version`    | no       | `1.14.0` | BATS version installed by `bats-core/bats-action`. Pinned so CI matches the local stable. |
+| `detik-install`   | no       | `false`  | Install the `bats-detik` helper library.                                                  |
+| `file-install`    | no       | `false`  | Install the `bats-file` helper library.                                                   |
+| `support-install` | no       | `true`   | Install the `bats-support` helper library.                                                |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-bats@main
+```
+
 ### `setup-mise`
 
 Installs [mise](https://mise.jdx.dev/) and the tools pinned in the consuming repo's `mise.toml`. Thin wrapper around [jdx/mise-action](https://github.com/jdx/mise-action) so repos avoid duplicating the version pin and wiring across CI pipelines.
@@ -528,6 +552,50 @@ steps:
       persist-credentials: false
   - uses: couimet/github-actions/setup-node-pnpm@main
 ```
+
+### `shell-coverage`
+
+Runs a BATS suite under [kcov](https://github.com/SimonKagstrom/kcov) and publishes a Cobertura report for Codecov. The action builds kcov from source at a pinned commit and caches the build, so a repository pays for the compile once. Use it when the BATS suite tests shell scripts; use [`bats-test`](#bats-test) alone when it does not.
+
+Four limits are worth knowing before you adopt it. kcov instruments bash only, so a suite that tests zsh, Python, Node.js, or a compiled binary contributes nothing for those targets and the report omits them. kcov does not run on macOS, so this check is CI-only and a local `bats` run stays the developer loop. `test-directory` takes exactly one path, because BATS receives it as a single argument, so a repository whose suites live in two places must consolidate them first: [couimet.github.io issue #232](https://github.com/couimet/couimet.github.io/issues/232) did that when it moved two orphaned suites into `bats-tests/`. And `recursive: true` with a repository-root `test-directory` makes BATS run every generated copy of the suite, so pair that combination with `recursive: false`.
+
+| Input             | Required | Default                                                              | Description                                                                                                          |
+| ----------------- | -------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `assert-install`  | no       | `true`                                                               | Install the `bats-assert` helper library.                                                                            |
+| `bats-version`    | no       | `1.14.0`                                                             | BATS version installed by `setup-bats`.                                                                              |
+| `detik-install`   | no       | `false`                                                              | Install the `bats-detik` helper library.                                                                             |
+| `exclude-pattern` | no       | `bats-tests/,coverage/,.git/,.history/,node_modules/,\.claude-work/` | kcov `--exclude-pattern`. Add any directory that holds a stub executable, or kcov traces the stub as project source. |
+| `file-install`    | no       | `false`                                                              | Install the `bats-file` helper library.                                                                              |
+| `include-path`    | no       | (repository root)                                                    | kcov `--include-path`: the tree kcov may instrument.                                                                 |
+| `install-kcov`    | no       | `true`                                                               | Build and install kcov. Set to `false` only when the runner already provides kcov.                                   |
+| `outdir`          | no       | `coverage/`                                                          | Directory kcov writes into, and where the consolidated `cobertura.xml` lands.                                        |
+| `recursive`       | no       | `true`                                                               | Pass `--recursive` so BATS descends into subdirectories of `test-directory`.                                         |
+| `support-install` | no       | `true`                                                               | Install the `bats-support` helper library.                                                                           |
+| `test-directory`  | no       | `bats-tests/`                                                        | Exactly one directory holding `.bats` files.                                                                         |
+
+| Output        | Description                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------------- |
+| `report-path` | Path to the consolidated Cobertura report, relative to the workspace. Pass it to `codecov-upload`. |
+
+The action fails rather than upload a misleading report. It fails when kcov produces no report tree, when kcov produces more than one, and when the single tree holds no `<class>` elements. The last case is the quiet one: a suite whose only targets are non-bash produces a valid but empty report, which Codecov reads as 0% rather than as absent data, so the error names the effective `include-path` and `exclude-pattern`. If kcov reports more than one tree, merge the trees with its native `kcov --merge <outdir> <kcov-dirs...>`; this action runs kcov once, so more than one tree means the outdir was shared with another kcov run.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/shell-coverage@main
+    id: coverage
+  - uses: couimet/github-actions/codecov-upload@main
+    with:
+      files: ${{ steps.coverage.outputs.report-path }}
+      flags: shell
+      token: ${{ secrets.CODECOV_TOKEN }}
+```
+
+In the consuming repository's `codecov.yml`, give shell coverage its own flag so a shell status cannot be confused with a TypeScript one, and keep `flag_management.default_rules.carryforward` at `true`. Carryforward, not an explicit flag declaration, is what carries a shell upload forward across commits that produce none: an undeclared flag uploads and displays normally. Set carryforward to `false` and a commit without a shell upload reads as 0% instead. A repository that wants a status gate on shell coverage adds that status to the `shell` flag, not to `flag_management.default_rules.statuses`, because a blanket entry mints a required status for every flag the repository declares.
+
+The first run in a repository builds kcov from source and is slow; later runs restore the binary from cache. The cache key holds the pinned kcov commit, so bumping that commit costs one more slow run.
 
 ### `shellcheck`
 
@@ -769,24 +837,33 @@ The workflow takes no inputs or secrets; it reads `github.event.pull_request.num
 
 Reusable workflow for shell script projects. Runs `shellcheck` and `bats-test` as separate jobs so each produces its own PR status check. Use this when you want per-step visibility in the PR status section; call the leaf actions directly in a single job when you prefer fewer runner minutes and a single check entry. A composite action variant can be added later if single-step embedding is wanted.
 
-| Input                        | Required | Default                                   | Description                                                                                  |
-| ---------------------------- | -------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `paths`                      | no       | `.`                                       | Root to search for shell scripts.                                                            |
-| `extensions`                 | no       | `sh bash`                                 | Space-separated file extensions to lint. An empty value lints all regular files under paths. |
-| `exclude`                    | no       | `.claude-work .history node_modules .git` | Space-separated path fragments excluded from the `find`.                                     |
-| `severity`                   | no       | (empty)                                   | Passed as `--severity` when set (e.g. `warning`, `error`).                                   |
-| `shellcheck-timeout-minutes` | no       | `360`                                     | Maximum minutes the shellcheck job may run before GitHub cancels it.                         |
-| `test-directory`             | no       | `bats-tests/`                             | Directory containing `.bats` test files.                                                     |
-| `bats-version`               | no       | `1.14.0`                                  | BATS version installed; pinned so CI matches the local brew stable.                          |
-| `recursive`                  | no       | `true`                                    | Recurse into subdirectories of `test-directory`.                                             |
-| `support-install`            | no       | `true`                                    | Install the `bats-support` helper library.                                                   |
-| `assert-install`             | no       | `true`                                    | Install the `bats-assert` helper library.                                                    |
-| `detik-install`              | no       | `false`                                   | Install the `detik` helper library.                                                          |
-| `file-install`               | no       | `false`                                   | Install the `bats-file` helper library.                                                      |
-| `formatter`                  | no       | (empty)                                   | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output.         |
-| `publish-comment`            | no       | `true`                                    | Post a sticky PR comment with test result counts. Set to `false` to opt out.                 |
-| `comment-header`             | no       | `BATS Test Results`                       | Unique header that identifies the BATS comment across re-runs (sticky update).               |
-| `bats-test-timeout-minutes`  | no       | `360`                                     | Maximum minutes the bats-test job may run before GitHub cancels it.                          |
+| Input                        | Required | Default                                                              | Description                                                                                  |
+| ---------------------------- | -------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `paths`                      | no       | `.`                                                                  | Root to search for shell scripts.                                                            |
+| `extensions`                 | no       | `sh bash`                                                            | Space-separated file extensions to lint. An empty value lints all regular files under paths. |
+| `exclude`                    | no       | `.claude-work .history node_modules .git`                            | Space-separated path fragments excluded from the `find`.                                     |
+| `severity`                   | no       | (empty)                                                              | Passed as `--severity` when set (e.g. `warning`, `error`).                                   |
+| `shellcheck-timeout-minutes` | no       | `360`                                                                | Maximum minutes the shellcheck job may run before GitHub cancels it.                         |
+| `test-directory`             | no       | `bats-tests/`                                                        | Directory containing `.bats` test files.                                                     |
+| `bats-version`               | no       | `1.14.0`                                                             | BATS version installed; pinned so CI matches the local brew stable.                          |
+| `recursive`                  | no       | `true`                                                               | Recurse into subdirectories of `test-directory`.                                             |
+| `support-install`            | no       | `true`                                                               | Install the `bats-support` helper library.                                                   |
+| `assert-install`             | no       | `true`                                                               | Install the `bats-assert` helper library.                                                    |
+| `detik-install`              | no       | `false`                                                              | Install the `detik` helper library.                                                          |
+| `file-install`               | no       | `false`                                                              | Install the `bats-file` helper library.                                                      |
+| `formatter`                  | no       | (empty)                                                              | Passed as `--formatter` (e.g. `tap`, `junit`); empty uses the default pretty output.         |
+| `publish-comment`            | no       | `true`                                                               | Post a sticky PR comment with test result counts. Set to `false` to opt out.                 |
+| `comment-header`             | no       | `BATS Test Results`                                                  | Unique header that identifies the BATS comment across re-runs (sticky update).               |
+| `bats-test-timeout-minutes`  | no       | `360`                                                                | Maximum minutes the bats-test job may run before GitHub cancels it.                          |
+| `run-coverage`               | no       | `false`                                                              | Add the `coverage` job, which measures shell coverage with kcov and uploads it to Codecov.   |
+| `coverage-exclude-pattern`   | no       | `bats-tests/,coverage/,.git/,.history/,node_modules/,\.claude-work/` | kcov `--exclude-pattern`. Add any directory that holds a stub executable.                    |
+| `coverage-outdir`            | no       | `coverage/`                                                          | Directory kcov writes into, and where the consolidated `cobertura.xml` lands.                |
+| `coverage-flag`              | no       | `shell`                                                              | Codecov flag applied to the shell coverage upload.                                           |
+| `coverage-timeout-minutes`   | no       | `360`                                                                | Maximum minutes the coverage job may run before GitHub cancels it.                           |
+
+| Secret          | Required | Description                                                                                                        |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `codecov-token` | no       | Codecov upload token for the `coverage` job. Required for a private repository and for a fork pull request upload. |
 
 The `bats-test` job posts a sticky PR comment when `publish-comment` is `true`; the caller's job needs `pull-requests: write` in its `permissions:` block.
 
@@ -805,6 +882,23 @@ Each job runs in parallel and appears as a separate status check named `{caller 
 shell-checks / shellcheck
 shell-checks / bats-test
 ```
+
+The `coverage` job also reports a check, but only when you set `run-coverage: true`, so it is not a merge-gate context and is not listed above. A consumer that does list it without enabling the job blocks every merge on a check that never reports. Toggle it on with `run-coverage: true` and pass the token:
+
+```yaml
+jobs:
+  shell-checks:
+    uses: couimet/github-actions/.github/workflows/shell-ci-checks.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      run-coverage: true
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
+```
+
+On enabling it, read the [`shell-coverage`](#shell-coverage) section for the `codecov.yml` guidance and for the kcov limits. The first run in a repository builds kcov from source and is slow; later runs restore it from cache.
 
 Adopting this workflow is a branch-protection change: if your default branch requires the bare `shellcheck` and `bats-test` contexts from previously inline jobs, update them to the `shell-checks / ...` names above in the same change or merges stay blocked on the old names. See [Branch protection and reusable workflows](#branch-protection-and-reusable-workflows).
 

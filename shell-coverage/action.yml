@@ -1,0 +1,99 @@
+name: 'Shell coverage'
+description: 'Runs a BATS suite under kcov and publishes a Cobertura report for Codecov. Opt-in: a first run builds kcov from source, later runs restore it from cache.'
+inputs:
+  test-directory:
+    description: 'Exactly one directory holding .bats files. A split suite must be consolidated first: BATS receives this as a single argument, so a second path is not read.'
+    required: false
+    default: 'bats-tests/'
+  bats-version:
+    description: 'BATS version installed by setup-bats. Pinned so CI matches the local brew stable.'
+    required: false
+    default: '1.14.0'
+  recursive:
+    description: 'Pass --recursive so BATS descends into subdirectories of test-directory. Pair it with recursive: false when test-directory is the repository root, or BATS runs every generated copy of the suite too.'
+    required: false
+    default: 'true'
+  support-install:
+    description: 'Install the bats-support helper library.'
+    required: false
+    default: 'true'
+  assert-install:
+    description: 'Install the bats-assert helper library.'
+    required: false
+    default: 'true'
+  file-install:
+    description: 'Install the bats-file helper library.'
+    required: false
+    default: 'false'
+  detik-install:
+    description: 'Install the bats-detik helper library.'
+    required: false
+    default: 'false'
+  include-path:
+    description: 'kcov --include-path: the tree kcov is allowed to instrument. An empty value means the repository workspace root.'
+    required: false
+    default: ''
+  exclude-pattern:
+    description: 'kcov --exclude-pattern. Keeps the report tree and test helpers out of the measurement. Add an entry for any directory holding a stub executable, or kcov traces the stub as project source.'
+    required: false
+    default: 'bats-tests/,coverage/,.git/,.history/,node_modules/,\.claude-work/'
+  outdir:
+    description: 'Directory kcov writes into, and where the consolidated cobertura.xml lands.'
+    required: false
+    default: 'coverage/'
+  install-kcov:
+    description: 'Build and install kcov. Set to false only when the runner already provides kcov.'
+    required: false
+    default: 'true'
+
+outputs:
+  report-path:
+    description: 'Path to the consolidated Cobertura report, relative to the workspace. Pass it to codecov-upload as files.'
+    value: ${{ steps.coverage.outputs.report-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install BATS
+      uses: couimet/github-actions/setup-bats@main
+      with:
+        bats-version: ${{ inputs.bats-version }}
+        support-install: ${{ inputs.support-install }}
+        assert-install: ${{ inputs.assert-install }}
+        file-install: ${{ inputs.file-install }}
+        detik-install: ${{ inputs.detik-install }}
+
+    # The cache path is the kcov parent directory rather than the per-commit
+    # directory, which makes a stale key benign: the restore brings back the old
+    # commit, install-kcov.sh finds the pinned commit absent, and it builds. The
+    # gating matters for the same reason: a consumer that supplies its own kcov
+    # never runs the build, so a cache saved from that run would be empty.
+    - name: Restore kcov cache
+      if: inputs.install-kcov == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ${{ runner.tool_cache }}/kcov
+        key: kcov-${{ runner.os }}-${{ runner.arch }}-a39874f938ce13f7a65f253120d1ec946b349ffe
+
+    # The commit and its archive digest are constants, not inputs, following the
+    # bats-core ref precedent in setup-bats: this repo chooses the kcov build, so
+    # a caller has no reason to override it. Bump both together, and bump the
+    # cache key above in the same edit.
+    - name: Install kcov
+      if: inputs.install-kcov == 'true'
+      shell: bash
+      env:
+        KCOV_COMMIT: a39874f938ce13f7a65f253120d1ec946b349ffe
+        KCOV_SHA256: dac01569171979477b500924be264d2a1bc649dae6010536228cbb319344d516
+      run: bash "${{ github.action_path }}/install-kcov.sh"
+
+    - name: Measure shell coverage
+      id: coverage
+      shell: bash
+      env:
+        TEST_DIRECTORY: ${{ inputs.test-directory }}
+        RECURSIVE: ${{ inputs.recursive }}
+        INCLUDE_PATH: ${{ inputs.include-path }}
+        EXCLUDE_PATTERN: ${{ inputs.exclude-pattern }}
+        OUTDIR: ${{ inputs.outdir }}
+      run: bash "${{ github.action_path }}/run.sh"

@@ -7,8 +7,10 @@ SCRIPT="$PROJECT_ROOT/scripts/verify-required-check-docs.sh"
 # The guard verifies all three reusable workflows in one run, so every test
 # scaffolds the same baseline: three workflow files whose top-level job ids match
 # the tokens after " / " in their README "Required status checks" text block.
-# typescript-ci-checks deliberately defines an extra job (auto-fix) that is
-# excluded from the required list, mirroring the real workflow.
+# Two jobs are excluded from the required list, mirroring the real workflows:
+# typescript-ci-checks defines auto-fix, and shell-ci-checks defines coverage.
+# Both report a check only under a condition the consumer opts into, so listing
+# either as required would block every merge on a status that never reports.
 
 write_workflow() {
   local name="$1"
@@ -52,7 +54,7 @@ EOF
 
 setup_all_match() {
   write_workflow ci-checks alpha beta
-  write_workflow shell-ci-checks gamma delta
+  write_workflow shell-ci-checks gamma delta coverage
   write_workflow typescript-ci-checks epsilon zeta auto-fix
   write_readme
 }
@@ -108,10 +110,23 @@ run_guard() {
   echo "$output" | grep -q "auto-fix"
 }
 
+@test "excluded job (coverage) must not be documented as a required check" {
+  setup_all_match
+  # The baseline already passes while coverage is a yml job but not in the block.
+  run_guard
+  [ "$status" -eq 0 ]
+  # Adding coverage to the block must then fail as extra.
+  sed 's#^s / delta$#s / delta\ns / coverage#' "$TEST_TEMP_DIR/README.md" > "$TEST_TEMP_DIR/README.md.tmp" && mv "$TEST_TEMP_DIR/README.md.tmp" "$TEST_TEMP_DIR/README.md"
+  run_guard
+  [ "$status" -eq 1 ]
+  echo "$output" | grep -q "shell-ci-checks"
+  echo "$output" | grep -q "coverage"
+}
+
 @test "missing workflow file -> failure" {
   write_readme
   write_workflow ci-checks alpha beta
-  write_workflow shell-ci-checks gamma delta
+  write_workflow shell-ci-checks gamma delta coverage
   run_guard
   [ "$status" -eq 1 ]
   echo "$output" | grep -q "typescript-ci-checks.yml not found"
