@@ -65,17 +65,17 @@
 
 <rule id="CI004" priority="critical">
   <title>Shell logic goes in .sh files, never inlined in run: blocks</title>
-  <do>Extract non-trivial shell logic into a .sh file inside the action directory. Call it from action.yml via <code>bash &quot;$&#123;&#123; github.action_path }}&quot;/script.sh</code>. Receive inputs as environment variables (uppercase). Start every script with <code>#!/usr/bin/env bash</code> and <code>set -euo pipefail</code>.</do>
+  <do>Extract non-trivial shell logic into a .sh file inside the action directory. Call it from action.yml via <code>bash &quot;$GITHUB_ACTION_PATH/script.sh&quot;</code>. Receive inputs as environment variables (uppercase). Start every script with <code>#!/usr/bin/env bash</code> and <code>set -euo pipefail</code>.</do>
   <never>Inline shell scripts in workflow `run:` blocks or composite action `run:` fields when the logic spans more than one line</never>
-  <rationale>.sh files are testable with BATS (full coverage). Inline `run:` blocks can only be exercised in live CI. Keeping scripts in files also makes the action directory self-contained: action.yml + script.sh + BATS test.</rationale>
+  <rationale>.sh files are testable with BATS (full coverage). Inline `run:` blocks can only be exercised in live CI. Keeping scripts in files also makes the action directory self-contained: action.yml + script.sh + BATS test. Use `GITHUB_ACTION_PATH` rather than `${{ github.action_path }}`: the runner substitutes the expression into the script text before bash parses it, and it resolves to the host path inside containers and to backslashes under Git Bash on Windows. The environment variable carries the same path at run time, so the shell reads it as data.</rationale>
   <good-example>
     ```yaml
-    # action.yml — script called via github.action_path:
+    # action.yml — script called via GITHUB_ACTION_PATH:
     - name: Discover coverage files
       shell: bash
       env:
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
-      run: bash "${{ github.action_path }}/discover.sh"
+      run: bash "$GITHUB_ACTION_PATH/discover.sh"
     ```
   </good-example>
   <bad-example>
@@ -155,8 +155,10 @@
     <action name="prettier">Installs Prettier at a pinned version and checks or fixes formatting against the repo config</action>
     <action name="publish-pr-comment">Posts a sticky PR comment; thin wrapper around marocchino/sticky-pull-request-comment</action>
     <action name="request-coderabbit-full-review">Posts a @coderabbitai full review comment to trigger a fresh CodeRabbit review</action>
+    <action name="setup-bats">Installs BATS and its helper libraries through the SHA-pinned bats-core/bats-action; shared by bats-test and shell-coverage</action>
     <action name="setup-mise">Thin wrapper around jdx/mise-action; installs mise and the tools pinned in the repo mise.toml</action>
     <action name="setup-node-pnpm">Installs Node.js from .nvmrc (overridable) and activates pnpm via Corepack</action>
+    <action name="shell-coverage">Runs a BATS suite under kcov and publishes a Cobertura report; opt-in, builds kcov from source at a pinned commit and caches the build</action>
     <action name="shellcheck">Discovers shell scripts (including extensionless) and runs shellcheck</action>
     <action name="test">Runs a test command (default `pnpm test`)</action>
     <action name="typescript-ci">One-step CI orchestrator chaining 12 internal actions (setup, install, format, lint, build, test, coverage, codecov, guards, checks, auto-fix)</action>

@@ -43,10 +43,16 @@ get_version() {
 # Default checks: var_name action_dir input_name npm_package
 # When npm_package is set, the version is read from that key in
 # <action_dir>/package.json devDependencies instead of the action.yml input default.
+#
+# BATS_VERSION appears three times because three actions bake a consumer-facing
+# bats-version default, and this script's contract is that such a default never
+# drifts from versions.mk. A repeated variable name needs no logic change.
 DEFAULT_CHECKS="
 PRETTIER_VERSION prettier prettier-version prettier
 MARKDOWNLINT_VERSION markdownlint markdownlint-version markdownlint-cli2
 BATS_VERSION bats-test bats-version
+BATS_VERSION setup-bats bats-version
+BATS_VERSION shell-coverage bats-version
 LYCHEE_VERSION validate-links lychee-version
 "
 CHECKS="${CHECKS:-$DEFAULT_CHECKS}"

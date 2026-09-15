@@ -72,6 +72,34 @@ on:
         required: false
         type: number
         default: 360
+      # Shell coverage is opt-in, and off by default: its first run in a
+      # repository builds kcov from source, so a consumer pays for it only after
+      # asking for it.
+      run-coverage:
+        required: false
+        type: boolean
+        default: false
+      coverage-exclude-pattern:
+        required: false
+        type: string
+        default: 'bats-tests/,coverage/,.git/,.history/,node_modules/,\.claude-work/'
+      coverage-outdir:
+        required: false
+        type: string
+        default: 'coverage/'
+      coverage-flag:
+        required: false
+        type: string
+        default: 'shell'
+      coverage-timeout-minutes:
+        required: false
+        type: number
+        default: 360
+
+    secrets:
+      codecov-token:
+        required: false
+        description: 'Codecov upload token. Required for the coverage job to upload from a private repository or from a fork pull request.'
 
 jobs:
   shellcheck:
@@ -115,3 +143,46 @@ jobs:
           publish-comment: ${{ github.event.pull_request.head.repo.fork == true && 'false' || inputs.publish-comment }}
           comment-header: ${{ inputs.comment-header }}
           github-token: ${{ github.token }}
+
+  coverage:
+    # Off unless the caller opts in, so the reusable workflow stays cheap for a
+    # repository that only wants shellcheck and BATS.
+    if: inputs.run-coverage
+    # Pinned rather than ubuntu-latest: kcov is not packaged for 24.04 and is
+    # built from source, so the image version decides which packages exist.
+    runs-on: ubuntu-24.04
+    # The kcov source build dominates a cold run. The cache inside the
+    # shell-coverage action removes it from most runs, but the first run of a
+    # repository and every run after a key change are cold.
+    timeout-minutes: ${{ fromJSON(inputs.coverage-timeout-minutes) }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      # The BATS inputs are relayed rather than defaulted so that the coverage
+      # job measures the suite the bats-test job runs. A consumer that sets
+      # test-directory for one job and not the other would otherwise get two
+      # different suites.
+      - uses: couimet/github-actions/shell-coverage@main
+        id: coverage
+        with:
+          test-directory: ${{ inputs.test-directory }}
+          bats-version: ${{ inputs.bats-version }}
+          recursive: ${{ inputs.recursive }}
+          support-install: ${{ inputs.support-install }}
+          assert-install: ${{ inputs.assert-install }}
+          detik-install: ${{ inputs.detik-install }}
+          file-install: ${{ inputs.file-install }}
+          exclude-pattern: ${{ inputs.coverage-exclude-pattern }}
+          outdir: ${{ inputs.coverage-outdir }}
+      # Failing the step is safe on a push and disruptive on a pull request: a
+      # Codecov outage or token problem has no bearing on the change under
+      # review, and a fork PR carries no token at all.
+      - uses: couimet/github-actions/codecov-upload@main
+        with:
+          files: ${{ steps.coverage.outputs.report-path }}
+          flags: ${{ inputs.coverage-flag }}
+          token: ${{ secrets.codecov-token }}
+          fail-ci-if-error: ${{ github.event_name == 'push' }}

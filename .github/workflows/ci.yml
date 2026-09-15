@@ -285,11 +285,23 @@ jobs:
           working-directory: tests
           coverage-summary-path: coverage/coverage-summary.json
 
+      - name: Setup BATS
+        uses: ./setup-bats
+
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
           test-directory: bats-tests/shell
           github-token: ${{ github.token }}
+
+      # Measures the same suites this step's neighbour runs, so a guard that
+      # misfires on this repo fails here rather than in a consumer's repository.
+      # The first run of a new kcov commit compiles it from source; later runs
+      # restore the build from cache.
+      - name: Measure shell coverage
+        uses: ./shell-coverage
+        with:
+          test-directory: bats-tests/shell
 
   self-test-checks:
     name: Self-test typescript-ci-checks workflow
@@ -311,6 +323,11 @@ jobs:
       # The dedicated BATS step above already posts the sticky test-results
       # comment; skip it here so the two runs do not fight over the same header.
       publish-comment: 'false'
+      # Exercise the opt-in coverage job on this repository's own runs. The job
+      # turns on the input relay and the codecov upload path, so a defect shows
+      # here before a consumer meets it. See the shell-coverage section in
+      # README.md for the limits of the action.
+      run-coverage: 'true'
 
   self-test-ci-checks:
     name: Self-test ci-checks workflow

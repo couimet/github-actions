@@ -210,6 +210,8 @@ write_package_json() {
 @test "DEFAULT_CHECKS (CHECKS unset) exercises the validate-links mapping" {
   # Every check DEFAULT_CHECKS registers must be satisfiable so a future
   # registration that real CI (no CHECKS env) runs is covered here too.
+  # BATS_VERSION is registered three times, once per action that bakes a
+  # bats-version default, so all three action.yml fixtures are needed.
   write_versions_mk "BATS_VERSION := 1.14.0
 LYCHEE_VERSION := 0.24.2
 MARKDOWNLINT_VERSION := 0.23.2
@@ -217,6 +219,12 @@ PRETTIER_VERSION := 3.9.6"
   write_package_json "prettier/package.json" '{"devDependencies":{"prettier":"3.9.6"}}'
   write_package_json "markdownlint/package.json" '{"devDependencies":{"markdownlint-cli2":"0.23.2"}}'
   write_action_yml "bats-test/action.yml" "inputs:
+  bats-version:
+    default: '1.14.0'"
+  write_action_yml "setup-bats/action.yml" "inputs:
+  bats-version:
+    default: '1.14.0'"
+  write_action_yml "shell-coverage/action.yml" "inputs:
   bats-version:
     default: '1.14.0'"
   write_action_yml "validate-links/action.yml" "inputs:
@@ -229,6 +237,29 @@ PRETTIER_VERSION := 3.9.6"
     bash "$SCRIPT"
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "validate-links/lychee-version default '0.24.2' matches versions.mk LYCHEE_VERSION"
+}
+
+# An unregistered action is the drift this script cannot see: bump versions.mk
+# and every registered action is checked, while the new one stays stale and
+# green. Running with CHECKS unset, exactly as CI does, is what proves the
+# registration and the version value in one assertion.
+@test "CHECKS unset against the real repo -> every action with a bats-version default is registered" {
+  local dir name
+  local declared=()
+  for dir in "$PROJECT_ROOT"/*/; do
+    [[ -f "$dir/action.yml" ]] || continue
+    grep -qE '^  bats-version:' "$dir/action.yml" || continue
+    declared+=("$(basename "$dir")")
+  done
+
+  # Guard against a vacuous pass if the discovery above ever matches nothing.
+  [ "${#declared[@]}" -gt 0 ]
+
+  run env -u CHECKS bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  for name in "${declared[@]}"; do
+    echo "$output" | grep -q "^${name}/bats-version default"
+  done
 }
 
 @test "mixed: npm_package and legacy checks in one run -> success" {

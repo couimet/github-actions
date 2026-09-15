@@ -64,6 +64,8 @@ FIXTURES="$PROJECT_ROOT/bats-tests/fixtures/required-checks"
   echo "$output" | grep -q "ci / format"
   ! echo "$output" | grep -q "ci / auto-fix"
   echo "$output" | grep -q "shell-ci-checks / shellcheck"
+  # coverage is conditional on run-coverage, so requiring it would block merges
+  ! echo "$output" | grep -q "shell-ci-checks / coverage"
   # 8 typescript-ci-checks contexts + 2 shell-ci-checks contexts
   [ "$(printf '%s\n' "$output" | grep -c ' / ')" -eq 10 ]
 }

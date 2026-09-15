@@ -40,6 +40,13 @@ ACTUAL_LINES=()
 
 # Job ids each reusable workflow reports. None of the workflows names its inner
 # jobs, so each reported check uses the job id as written in the workflow file.
+#
+# Two job ids are deliberately absent because they are not merge gates: auto-fix
+# reports only on the fix run after a failure, and coverage reports only when the
+# consumer sets run-coverage to true. Listing either as required blocks every
+# merge on a check that never reports, which is the failure this script exists to
+# prevent. See exclusions_for in scripts/verify-required-check-docs.sh for the
+# same rule applied to the README.
 workflow_jobs() {
   case "$1" in
     ci-checks) echo "format lint build test" ;;
@@ -49,8 +56,11 @@ workflow_jobs() {
   esac
 }
 
-# Flat list of every inner job id, used to recognise bare stale contexts.
-ALL_INNER_JOBS="format lint markdownlint build test guard-versions check-no-prerelease-deps check-todos auto-fix shellcheck bats-test"
+# Flat list of every inner job id, used to recognise bare stale contexts. This
+# includes the two conditional jobs above: they are still inner job ids, they are
+# just not required. Neither gains a "caller / job" suggestion, because a job that
+# reports conditionally has no unconditional replacement to point at.
+ALL_INNER_JOBS="format lint markdownlint build test guard-versions check-no-prerelease-deps check-todos auto-fix shellcheck bats-test coverage"
 
 inner_in_all() {
   [[ " $ALL_INNER_JOBS " == *" $1 "* ]]
