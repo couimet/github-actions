@@ -23,4 +23,4 @@ runs:
       env:
         BASE_REF: ${{ inputs.base-ref || github.event.pull_request.base.sha }}
         HEAD_REF: ${{ inputs.head-ref || github.event.pull_request.head.sha }}
-      run: bash "${{ github.action_path }}/guard.sh"
+      run: bash "$GITHUB_ACTION_PATH/guard.sh"

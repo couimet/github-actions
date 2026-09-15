@@ -99,13 +99,17 @@ while [[ "$i" -le "${STUB_TREE_COUNT:-1}" ]]; do
   dir="$outdir/target${i}.deadbeef"
   mkdir -p "$dir"
   {
-    printf '<coverage line-rate="1.0">\n  <packages>\n'
+    # The <classes> container is part of the stub because the guard counts
+    # against it: kcov writes it even when the report holds no <class> at all.
+    # A fixture that omitted it would model a shape kcov cannot produce, and
+    # the zero-class case below would assert nothing.
+    printf '<coverage line-rate="1.0">\n  <packages>\n    <classes>\n'
     j=1
     while [[ "$j" -le "${STUB_CLASS_COUNT:-1}" ]]; do
-      printf '    <class name="target_sh__%s" filename="scripts/target%s.sh" />\n' "$j" "$j"
+      printf '      <class name="target_sh__%s" filename="scripts/target%s.sh" />\n' "$j" "$j"
       j=$((j + 1))
     done
-    printf '  </packages>\n</coverage>\n'
+    printf '    </classes>\n  </packages>\n</coverage>\n'
   } > "$dir/cobertura.xml"
   i=$((i + 1))
 done

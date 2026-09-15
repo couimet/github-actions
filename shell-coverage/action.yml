@@ -85,7 +85,12 @@ runs:
       env:
         KCOV_COMMIT: a39874f938ce13f7a65f253120d1ec946b349ffe
         KCOV_SHA256: dac01569171979477b500924be264d2a1bc649dae6010536228cbb319344d516
-      run: bash "${{ github.action_path }}/install-kcov.sh"
+      # GITHUB_ACTION_PATH rather than ${{ github.action_path }}: the expression
+      # is substituted into the script text before bash parses it, and it is
+      # known to resolve to the host path inside containers and to expand to
+      # backslashes under Git Bash on Windows. The environment variable carries
+      # the same path at run time, so the shell reads it as data.
+      run: bash "$GITHUB_ACTION_PATH/install-kcov.sh"
 
     - name: Measure shell coverage
       id: coverage
@@ -96,4 +101,4 @@ runs:
         INCLUDE_PATH: ${{ inputs.include-path }}
         EXCLUDE_PATTERN: ${{ inputs.exclude-pattern }}
         OUTDIR: ${{ inputs.outdir }}
-      run: bash "${{ github.action_path }}/run.sh"
+      run: bash "$GITHUB_ACTION_PATH/run.sh"

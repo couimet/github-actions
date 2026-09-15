@@ -24,14 +24,14 @@ runs:
       shell: bash
       env:
         LYCHEE_VERSION: ${{ inputs.lychee-version }}
-      run: bash "${{ github.action_path }}/install.sh"
+      run: bash "$GITHUB_ACTION_PATH/install.sh"
 
     - name: Validate links
       shell: bash
       env:
         PATHS: ${{ inputs.paths }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
-      run: bash "${{ github.action_path }}/run.sh"
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
 
     - name: Report excluded private targets
       id: private-report
@@ -39,7 +39,7 @@ runs:
       env:
         PATHS: ${{ inputs.paths }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
-      run: bash "${{ github.action_path }}/report-private.sh"
+      run: bash "$GITHUB_ACTION_PATH/report-private.sh"
 
     - name: Post PR comment with excluded private targets
       if: steps.private-report.outputs.comment-file != '' && inputs.github-token != '' && github.event.pull_request != null

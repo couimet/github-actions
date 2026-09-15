@@ -68,7 +68,7 @@ runs:
       env:
         PUBLISH_COMMENT: ${{ inputs.publish-comment }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
-      run: bash "${{ github.action_path }}/validate.sh"
+      run: bash "$GITHUB_ACTION_PATH/validate.sh"
 
     - name: Run BATS
       id: bats-run
@@ -78,7 +78,7 @@ runs:
         FORMATTER: ${{ inputs.formatter }}
         RECURSIVE: ${{ inputs.recursive }}
         PUBLISH_COMMENT: ${{ inputs.publish-comment }}
-      run: bash "${{ github.action_path }}/run.sh"
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
 
     - name: Publish BATS test results
       if: always() && inputs.publish-comment == 'true' && steps.bats-run.outputs.total != '' && github.event_name == 'pull_request'

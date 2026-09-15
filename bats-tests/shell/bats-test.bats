@@ -280,7 +280,7 @@ EOF
   [[ "$output" == *"inputs.publish-comment == 'true' && inputs.github-token == ''"* ]]
   [[ "$output" == *'PUBLISH_COMMENT: ${{ inputs.publish-comment }}'* ]]
   [[ "$output" == *'GITHUB_TOKEN: ${{ inputs.github-token }}'* ]]
-  [[ "$output" == *'bash "${{ github.action_path }}/validate.sh"'* ]]
+  [[ "$output" == *'bash "$GITHUB_ACTION_PATH/validate.sh"'* ]]
 }
 
 @test "action.yml: install step delegates to setup-bats with all five install inputs relayed" {

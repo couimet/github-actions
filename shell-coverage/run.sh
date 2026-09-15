@@ -125,7 +125,10 @@ if [[ "$report_count" -gt 1 ]]; then
 fi
 
 report_path="$(trees -print -quit)"
-class_count="$(grep -c '<class' "$report_path" || true)"
+# Match <class> elements only. The pattern '<class' also matches the <classes>
+# container, which kcov writes even when the report holds no class at all, so
+# the guard below would never fire on the empty report it exists to catch.
+class_count="$(grep -cE '<class([[:space:]]|>)' "$report_path" || true)"
 
 if [[ "$class_count" -eq 0 ]]; then
   echo "shell-coverage error: the report tree under ${OUTDIR} has no <class> elements." >&2
