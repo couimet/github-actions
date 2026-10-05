@@ -17,6 +17,8 @@ IFS=' ' read -r -a PATH_ARGS <<< "${PATHS:-**/*.md}"
 # markdown under .github/ and .claude/ is covered by ** globs.
 # --exclude-all-private: block private, link-local, and loopback targets; the
 # workflow runs on pull_request events over contributor-controlled markdown.
-# --exclude-path: skip vendored dependencies; markdownlint and prettier exclude
-# node_modules via their ignore files, and lychee has no equivalent repo config.
+# --exclude-path: skip vendored dependencies, because markdownlint and prettier
+# exclude node_modules through their own ignore files and no equivalent ignore
+# file covers a ** glob. An exclusion a repository wants for its own links belongs
+# in its lychee.toml, which lychee reads from the working directory.
 lychee --hidden --exclude-all-private --exclude-path 'node_modules' --no-progress "${PATH_ARGS[@]}"

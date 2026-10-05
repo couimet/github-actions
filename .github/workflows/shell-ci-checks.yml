@@ -28,6 +28,15 @@ on:
         required: false
         type: number
         default: 360
+      # Free-form command run before the suite in the job that executes it, so a
+      # consumer can provision the tools its tests shell out to. Those tools
+      # belong to the consumer, not to this workflow, which is why the command
+      # arrives as an input rather than as a step here. The shellcheck job reads
+      # files and needs nothing, so it runs no setup.
+      setup:
+        required: false
+        type: string
+        default: ''
       test-directory:
         required: false
         type: string
@@ -100,6 +109,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+      - if: inputs.setup != ''
+        shell: bash
+        run: ${{ inputs.setup }}
       - uses: couimet/github-actions/bats-test@main
         with:
           test-directory: ${{ inputs.test-directory }}
