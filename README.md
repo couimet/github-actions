@@ -490,6 +490,30 @@ steps:
         }
 ```
 
+### `setup-bats`
+
+Installs [BATS](https://github.com/bats-core/bats-core) and its helper libraries. Thin wrapper around [bats-core/bats-action](https://github.com/bats-core/bats-action) pinned to a commit SHA, so `bats-test` and `shell-coverage` share one pin instead of duplicating the install step. Adopt it directly only when you need BATS without either action.
+
+The `bats-version` default tracks the local brew stable, so a CI run and a local run use the same BATS release.
+
+| Input             | Required | Default  | Description                                                                               |
+| ----------------- | -------- | -------- | ----------------------------------------------------------------------------------------- |
+| `assert-install`  | no       | `true`   | Install the `bats-assert` helper library.                                                 |
+| `bats-version`    | no       | `1.14.0` | BATS version installed by `bats-core/bats-action`. Pinned so CI matches the local stable. |
+| `detik-install`   | no       | `false`  | Install the `bats-detik` helper library.                                                  |
+| `file-install`    | no       | `false`  | Install the `bats-file` helper library.                                                   |
+| `support-install` | no       | `true`   | Install the `bats-support` helper library.                                                |
+
+This action has no outputs; success or failure is reported through the step exit code.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - uses: couimet/github-actions/setup-bats@main
+```
+
 ### `setup-mise`
 
 Installs [mise](https://mise.jdx.dev/) and the tools pinned in the consuming repo's `mise.toml`. Thin wrapper around [jdx/mise-action](https://github.com/jdx/mise-action) so repos avoid duplicating the version pin and wiring across CI pipelines.
@@ -641,7 +665,7 @@ steps:
 
 ### `validate-links`
 
-Validates that links in Markdown (or any text) files resolve; the step fails when a link is broken. The checker never contacts a private, link-local, or loopback target: hosts in the RFC1918 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), loopback (127.0.0.0/8 and `::1`), link-local (169.254.0.0/16 and `fe80::/10`), unique-local (`fc00::/7`), and the `localhost` hostname are excluded from checking, so docs that reference internal hosts for local development still pass. When a `github-token` is supplied and the action runs on a pull request, it posts an informational comment listing the excluded private, link-local, or loopback URLs it encountered but did not test; on other events it logs them to the step log instead. Hidden directories are included in `**` globs (so `.github/` and `.claude/` markdown is covered), and vendored `node_modules` markdown is excluded so the check stays on the project's own docs. Link resolution is backed by [lychee](https://github.com/lycheeverse/lychee) at the pinned version in `versions.mk`.
+Validates that links in Markdown (or any text) files resolve; the step fails when a link is broken. The checker never contacts a private, link-local, or loopback target: hosts in the RFC1918 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), loopback (127.0.0.0/8 and `::1`), link-local (169.254.0.0/16 and `fe80::/10`), unique-local (`fc00::/7`), and the `localhost` hostname are excluded from checking, so docs that reference internal hosts for local development still pass. When a `github-token` is supplied and the action runs on a pull request, it posts an informational comment listing the excluded private, link-local, or loopback URLs it encountered but did not test; on other events it logs them to the step log instead. Hidden directories are included in `**` globs (so `.github/` and `.claude/` markdown is covered), and vendored `node_modules` markdown is excluded so the check stays on the project's own docs. Link resolution is backed by [lychee](https://github.com/lycheeverse/lychee) at the pinned version in `versions.mk`. A `lychee.toml` in the working directory is honored, so a repository can exclude a host that answers CI with a status that does not reflect a broken link; this repository excludes `npmjs.com` that way, because it returns 403 to the runner for pages that exist.
 
 | Input               | Required | Default   | Description                                                                                                                                                          |
 | ------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

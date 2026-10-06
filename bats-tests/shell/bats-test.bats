@@ -282,3 +282,21 @@ EOF
   [[ "$output" == *'GITHUB_TOKEN: ${{ inputs.github-token }}'* ]]
   [[ "$output" == *'bash "${{ github.action_path }}/validate.sh"'* ]]
 }
+
+# The misses are collected rather than asserted inside the loop: a bare [[ ]]
+# in a loop body reports only the last iteration's status, so an earlier
+# mismatch would pass unnoticed.
+@test "action.yml: setup-bats pins bats-core and relays all five install inputs" {
+  run cat "$PROJECT_ROOT/setup-bats/action.yml"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'uses: bats-core/bats-action@'* ]]
+  local input
+  local missing=()
+  for input in bats-version support-install assert-install file-install detik-install; do
+    [[ "$output" == *"${input}: \${{ inputs.${input} }}"* ]] || missing+=("$input")
+  done
+  if [[ "${#missing[@]}" -gt 0 ]]; then
+    echo "not relayed: ${missing[*]}" >&2
+    return 1
+  fi
+}

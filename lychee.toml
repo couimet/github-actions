@@ -1,0 +1,15 @@
+# lychee reads this file from the working directory, so the validate-links action
+# picks it up here and a consumer can add its own.
+#
+# npmjs.com answers the CI runner with 403 for package pages that do exist. The
+# same request from a developer machine returns 200, so the target is unreachable
+# from CI rather than broken, and an unfiltered read fails every run. Exclude the
+# host here instead of accepting 403 globally, so that a 403 from any other host
+# still fails the step.
+#
+# lychee tests an exclude entry against the whole URL rather than against the
+# host, so the pattern below anchors to the scheme and closes at the host
+# boundary. The www-only group holds the exclusion to the pages that answer 403,
+# because a wider subdomain match would stop checking hosts such as
+# docs.npmjs.com.
+exclude = ["^https?://(www\\.)?npmjs\\.com(/|$)"]

@@ -32,7 +32,13 @@ jobs:
           command: bash scripts/generate-mise-toml.sh
           github-token: ${{ github.token }}
 
+      # verify-action-shas.sh resolves every pin through the GitHub API, and gh
+      # reads GH_TOKEN or GITHUB_TOKEN. The runner exports neither, so with no
+      # credential here every lookup fails on the shared address quota and every
+      # valid pin reports as missing.
       - name: Verify action coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: make check-actions
 
       - name: Setup Node.js & pnpm
@@ -285,6 +291,12 @@ jobs:
           working-directory: tests
           coverage-summary-path: coverage/coverage-summary.json
 
+      # Exercises setup-bats through its local path, so a bad pin or a dropped
+      # input relay fails here. bats-test still installs BATS inline on this
+      # branch; the delegation to setup-bats follows once the action is on main.
+      - name: Setup BATS
+        uses: ./setup-bats
+
       - name: Run shell tests (BATS)
         uses: ./bats-test
         with:
@@ -304,10 +316,21 @@ jobs:
 
   self-test-shell-ci-checks:
     name: Self-test shell-ci-checks workflow
+    # The nested bats-test job declares `pull-requests: write` for its sticky
+    # comment, and GitHub validates that request against this block before any
+    # job starts. A missing grant fails the whole workflow file with a
+    # 0-second startup_failure that names this line, so the scope stays here
+    # even though publish-comment is false below.
     permissions:
       contents: read
+      pull-requests: write
     uses: ./.github/workflows/shell-ci-checks.yml
     with:
+      # The bats-test job runs this repository's own suite, which shells out to
+      # uv, actionlint, and the markdownlint action's node_modules. A GitHub
+      # runner holds none of them, so the workflow's setup input provisions them
+      # from mise.toml before the suite runs.
+      setup: bash scripts/setup-ci-toolchain.sh
       # The dedicated BATS step above already posts the sticky test-results
       # comment; skip it here so the two runs do not fight over the same header.
       publish-comment: 'false'
