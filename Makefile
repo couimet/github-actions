@@ -10,6 +10,8 @@ check-actions:
 	bash scripts/generate-mise-toml.sh --check
 	bash scripts/verify-action-shas.sh
 	bash scripts/verify-no-relative-uses.sh
+	bash scripts/verify-workflows.sh
+	bash scripts/verify-workflow-permissions.sh
 	bash scripts/verify-ci-checks-secrets.sh
 	bash scripts/verify-required-check-docs.sh
 	bash scripts/verify-dependabot-npm-coverage.sh
@@ -29,7 +31,7 @@ install-prereqs:
 	}
 	@mise install
 	@missing=""; \
-	for tool in node bats shellcheck uv jq; do \
+	for tool in node bats shellcheck uv jq actionlint; do \
 		command -v $$tool >/dev/null 2>&1 || missing="$$missing $$tool"; \
 	done; \
 	[ -z "$$missing" ] || { \

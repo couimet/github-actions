@@ -29,7 +29,7 @@ runs:
       shell: bash
       env:
         PRETTIER_VERSION: ${{ inputs.prettier-version }}
-      run: bash "${{ github.action_path }}/install.sh"
+      run: bash "$GITHUB_ACTION_PATH/install.sh"
 
     - name: Run Prettier
       shell: bash
@@ -38,4 +38,4 @@ runs:
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         CONFIG: ${{ inputs.config }}
         PATHS: ${{ inputs.paths }}
-      run: bash "${{ github.action_path }}/lint.sh"
+      run: bash "$GITHUB_ACTION_PATH/lint.sh"

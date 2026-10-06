@@ -50,12 +50,11 @@ inputs:
 runs:
   using: composite
   steps:
-    # The bats-action ref is pinned by SHA and intentionally NOT a caller input:
-    # GitHub forbids ${{ }} expressions in a step's `uses:`, so bump it via PR here.
-    # The configurable lever is bats-version below (pinned to the brew stable for
-    # local/CI parity; bump deliberately on `brew upgrade`).
+    # setup-bats owns the pointer to the SHA-pinned bats-core/bats-action ref.
+    # This action keeps its own bats-version input so existing consumers keep
+    # working, and relays it; the install step itself lives in one place.
     - name: Install BATS
-      uses: bats-core/bats-action@77d6fb60505b4d0d1d73e48bd035b55074bbfb43
+      uses: couimet/github-actions/setup-bats@main
       with:
         bats-version: ${{ inputs.bats-version }}
         support-install: ${{ inputs.support-install }}
@@ -69,7 +68,7 @@ runs:
       env:
         PUBLISH_COMMENT: ${{ inputs.publish-comment }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
-      run: bash "${{ github.action_path }}/validate.sh"
+      run: bash "$GITHUB_ACTION_PATH/validate.sh"
 
     - name: Run BATS
       id: bats-run
@@ -79,7 +78,7 @@ runs:
         FORMATTER: ${{ inputs.formatter }}
         RECURSIVE: ${{ inputs.recursive }}
         PUBLISH_COMMENT: ${{ inputs.publish-comment }}
-      run: bash "${{ github.action_path }}/run.sh"
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
 
     - name: Publish BATS test results
       if: always() && inputs.publish-comment == 'true' && steps.bats-run.outputs.total != '' && github.event_name == 'pull_request'

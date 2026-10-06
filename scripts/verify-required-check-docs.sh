@@ -7,7 +7,9 @@ set -euo pipefail
 # sync with the workflow files or adopters will require stale or missing checks.
 #
 # A job deliberately documented as not a merge gate (auto-fix only reports on the
-# fix run after a failure) is excluded from the required list: see exclusions_for.
+# fix run after a failure; coverage reports only when run-coverage is true) is
+# excluded from the required list: see exclusions_for. Listing either as a
+# required check would block every merge on a status that never reports.
 #
 # Inputs (env):
 #   WORKFLOWS_DIR  dir of reusable workflow files (default: <repo_root>/.github/workflows)
@@ -26,6 +28,7 @@ REUSABLE_WORKFLOWS="ci-checks shell-ci-checks typescript-ci-checks"
 # Jobs a workflow defines but deliberately does not list as required checks.
 exclusions_for() {
   case "$1" in
+    shell-ci-checks) echo "coverage" ;;
     typescript-ci-checks) echo "auto-fix" ;;
     *) echo "" ;;
   esac

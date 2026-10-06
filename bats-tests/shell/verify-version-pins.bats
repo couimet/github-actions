@@ -210,8 +210,8 @@ write_package_json() {
 @test "DEFAULT_CHECKS (CHECKS unset) exercises the validate-links mapping" {
   # Every check DEFAULT_CHECKS registers must be satisfiable so a future
   # registration that real CI (no CHECKS env) runs is covered here too.
-  # BATS_VERSION is registered twice, once per action that bakes a bats-version
-  # default, so both action.yml fixtures are needed.
+  # BATS_VERSION is registered three times, once per action that bakes a
+  # bats-version default, so all three action.yml fixtures are needed.
   write_versions_mk "BATS_VERSION := 1.14.0
 LYCHEE_VERSION := 0.24.2
 MARKDOWNLINT_VERSION := 0.23.2
@@ -222,6 +222,9 @@ PRETTIER_VERSION := 3.9.6"
   bats-version:
     default: '1.14.0'"
   write_action_yml "setup-bats/action.yml" "inputs:
+  bats-version:
+    default: '1.14.0'"
+  write_action_yml "shell-coverage/action.yml" "inputs:
   bats-version:
     default: '1.14.0'"
   write_action_yml "validate-links/action.yml" "inputs:

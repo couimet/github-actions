@@ -13,6 +13,12 @@ setup() {
   # $VALID_SHAS_FILE (one per line). Any other SHA exits 1.
   cat > "$TEST_TEMP_DIR/gh" <<'SCRIPT'
 #!/usr/bin/env bash
+# The credential test. GH_AUTHENTICATED=0 stands in for a runner that passes no
+# GH_TOKEN, which is the shape that made every lookup fail in CI.
+if [[ "${1:-}" == "auth" && "${2:-}" == "status" ]]; then
+  [[ "${GH_AUTHENTICATED:-1}" == "1" ]] && exit 0
+  exit 1
+fi
 for arg in "$@"; do
   if [[ "$arg" =~ ^repos/.*/commits/([0-9a-f]{40})$ ]]; then
     sha="${BASH_REMATCH[1]}"
@@ -126,6 +132,56 @@ EOF
   run_script
   [ "$status" -eq 0 ]
   echo "$output" | grep -q "All 0 pinned SHA(s) verified"
+}
+
+# Without a credential every lookup fails, and the guard used to read each
+# failure as a missing pin. It must name the credential instead, and it must not
+# ask for one when the repository holds no third-party pin.
+@test "gh CLI holds no credential, with a pin to resolve -> failure naming the credential" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<EOF
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: owner/repo@${SHA1}
+EOF
+
+  run bash -c "
+    cd '$TEST_TEMP_DIR' && \
+    PATH='$TEST_TEMP_DIR:$PATH' \
+    GH_AUTHENTICATED=0 \
+    VALID_SHAS_FILE='$TEST_TEMP_DIR/valid-shas.txt' \
+    ACTION_ROOT='$TEST_TEMP_DIR' \
+    bash '$SCRIPT'
+  "
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"the gh CLI holds no credential"* ]]
+  [[ "$output" != *"MISSING"* ]]
+}
+
+@test "gh CLI holds no credential, with no pin to resolve -> success" {
+  cat > "$TEST_TEMP_DIR/test-action/action.yml" <<'EOF'
+name: Test
+description: Test action
+runs:
+  using: composite
+  steps:
+    - uses: couimet/github-actions/publish-pr-comment@main
+EOF
+
+  run bash -c "
+    cd '$TEST_TEMP_DIR' && \
+    PATH='$TEST_TEMP_DIR:$PATH' \
+    GH_AUTHENTICATED=0 \
+    VALID_SHAS_FILE='$TEST_TEMP_DIR/valid-shas.txt' \
+    ACTION_ROOT='$TEST_TEMP_DIR' \
+    bash '$SCRIPT'
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"All 0 pinned SHA(s) verified"* ]]
 }
 
 @test "gh CLI not available -> failure" {
