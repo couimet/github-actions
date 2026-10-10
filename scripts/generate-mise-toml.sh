@@ -4,9 +4,9 @@ set -euo pipefail
 # Generate mise.toml from the repo's declared version sources.
 #
 # Node comes from .nvmrc. Bats comes from versions.mk (BATS_VERSION), the
-# contract shared actions bake for consumers. ShellCheck, uv, and jq are not
-# part of any shared action, so they have no other declared home and are pinned
-# here as constants; see the comment at the top of versions.mk.
+# contract shared actions bake for consumers. The dev-only tools are not part of
+# any shared action, so they have no other declared home and are pinned here as
+# constants; see the comment at the top of versions.mk.
 #
 # Usage:
 #   generate-mise-toml.sh           write mise.toml
@@ -29,6 +29,7 @@ MISE_TOML="${MISE_TOML_PATH:-$REPO_ROOT/mise.toml}"
 SHELLCHECK_VERSION="0.11.0"
 UV_VERSION="0.11.21"
 JQ_VERSION="1.7.1"
+ACTIONLINT_VERSION="1.7.12"
 
 CHECK_ONLY=false
 if [[ "${1:-}" == "--check" ]]; then
@@ -95,6 +96,7 @@ bats = "${bats}"
 shellcheck = "${SHELLCHECK_VERSION}"
 uv = "${UV_VERSION}"
 jq = "${JQ_VERSION}"
+actionlint = "${ACTIONLINT_VERSION}"
 EOF
 }
 

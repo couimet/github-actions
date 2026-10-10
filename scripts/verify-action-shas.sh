@@ -48,6 +48,7 @@ missing=0
 checked=0
 violations=0
 digests=0
+credential_checked=0
 
 while IFS= read -r scan_file; do
   [[ -z "$scan_file" ]] && continue
@@ -115,6 +116,20 @@ while IFS= read -r scan_file; do
     fi
 
     checked=$((checked + 1))
+
+    # gh api reads GH_TOKEN or GITHUB_TOKEN. With neither it runs
+    # unauthenticated, and a shared runner address spends the 60-request hourly
+    # quota long before the first call. Every lookup then fails, and reading
+    # that failure as a missing pin reports valid pins as force-pushed. Test the
+    # credential once, at the first pin that needs it, so a repository with no
+    # third-party pin never asks for one.
+    if (( ! credential_checked )); then
+      credential_checked=1
+      if ! gh auth status >/dev/null 2>&1; then
+        echo "::error::${scan_file} pins ${repo}@${pin:0:7}, and the gh CLI holds no credential. Set GH_TOKEN or GITHUB_TOKEN in the environment, or run 'gh auth login'. Every remote check fails without one, and a failed check is not a missing pin."
+        exit 1
+      fi
+    fi
 
     echo -n "Checking ${repo}@${pin:0:7}... "
 

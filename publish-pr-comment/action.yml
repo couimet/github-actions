@@ -28,7 +28,7 @@ runs:
       shell: bash
       env:
         PR_NUMBER: ${{ inputs.pr-number || github.event.pull_request.number }}
-      run: bash "${{ github.action_path }}/resolve.sh"
+      run: bash "$GITHUB_ACTION_PATH/resolve.sh"
 
     - name: Compute comment header
       id: header
@@ -37,7 +37,7 @@ runs:
         CREATE_NEW: ${{ inputs.create-new }}
         HEADER: ${{ inputs.header }}
         GITHUB_RUN_ID: ${{ github.run_id }}
-      run: bash "${{ github.action_path }}/header.sh"
+      run: bash "$GITHUB_ACTION_PATH/header.sh"
 
     - name: Post sticky PR comment
       uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88

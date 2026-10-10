@@ -19,4 +19,4 @@ runs:
       shell: bash
       env:
         AUTO_FIX_COMMIT_MESSAGE: ${{ inputs.commit-message }}
-      run: bash "${{ github.action_path }}/detect.sh"
+      run: bash "$GITHUB_ACTION_PATH/detect.sh"

@@ -41,7 +41,7 @@ runs:
         BASE_REF: ${{ inputs.base-ref }}
         FILE_EXTENSIONS: ${{ inputs.file-extensions }}
         SCAN_PATH: ${{ inputs.path }}
-      run: bash "${{ github.action_path }}/check.sh"
+      run: bash "$GITHUB_ACTION_PATH/check.sh"
 
     - name: Post PR comment
       if: inputs.base-ref != '' && inputs.github-token != ''

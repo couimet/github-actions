@@ -134,7 +134,7 @@ teardown() {
   run sed -n '/- name: Request CodeRabbit full review/,/run: bash/p' "$PROJECT_ROOT/request-coderabbit-full-review/action.yml"
   [ "$status" -eq 0 ]
   [[ "$output" == *'GITHUB_TOKEN: ${{ inputs.github-token || github.token }}'* ]]
-  [[ "$output" == *'bash "${{ github.action_path }}/request-coderabbit-full-review.sh"'* ]]
+  [[ "$output" == *'bash "$GITHUB_ACTION_PATH/request-coderabbit-full-review.sh"'* ]]
 
   run sed -n '/github-token:/,/default:/p' "$PROJECT_ROOT/request-coderabbit-full-review/action.yml"
   [ "$status" -eq 0 ]
