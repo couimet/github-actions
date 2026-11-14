@@ -28,4 +28,4 @@ runs:
         EXTENSIONS: ${{ inputs.extensions }}
         EXCLUDE: ${{ inputs.exclude }}
         SEVERITY: ${{ inputs.severity }}
-      run: bash "${{ github.action_path }}/lint.sh"
+      run: bash "$GITHUB_ACTION_PATH/lint.sh"

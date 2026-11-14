@@ -35,7 +35,7 @@ runs:
       env:
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         COVERAGE_SUMMARY_PATH: ${{ inputs.coverage-summary-path }}
-      run: bash "${{ github.action_path }}/discover.sh"
+      run: bash "$GITHUB_ACTION_PATH/discover.sh"
 
     - name: Post coverage comment
       if: steps.discover.outputs.multiple_files != ''

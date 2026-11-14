@@ -36,4 +36,4 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token || github.token }}
         TRIGGER: ${{ inputs.trigger }}
         METADATA: ${{ inputs.metadata }}
-      run: bash "${{ github.action_path }}/request-coderabbit-full-review.sh"
+      run: bash "$GITHUB_ACTION_PATH/request-coderabbit-full-review.sh"

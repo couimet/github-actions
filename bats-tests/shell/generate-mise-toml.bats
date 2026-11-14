@@ -44,7 +44,7 @@ run_generator() {
   grep -q '^bats = "1.14.0"$' "$MISE_TOML"
 }
 
-@test "declares dev-only tools as constants for shellcheck, uv, and jq" {
+@test "declares dev-only tools as constants for shellcheck, uv, jq, and actionlint" {
   write_nvmrc "24"
   write_versions_mk "BATS_VERSION := 1.14.0"
 
@@ -53,6 +53,7 @@ run_generator() {
   grep -q '^shellcheck = "' "$MISE_TOML"
   grep -q '^uv = "' "$MISE_TOML"
   grep -q '^jq = "' "$MISE_TOML"
+  grep -q '^actionlint = "' "$MISE_TOML"
 }
 
 @test "strips a leading v from .nvmrc" {

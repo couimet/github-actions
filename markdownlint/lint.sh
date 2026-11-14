@@ -67,7 +67,7 @@ prepare_fix_config() {
 
   # Only JSON/JSONC configs can be parsed and rewritten.
   case "$source" in
-    *.json | *.jsonc) ;;
+    *.json | *.jsonc) ;; # kcov-exclude-line: an empty arm holds no command, so kcov never sees a hit
     *) return 1 ;;
   esac
 

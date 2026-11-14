@@ -292,8 +292,7 @@ jobs:
           coverage-summary-path: coverage/coverage-summary.json
 
       # Exercises setup-bats through its local path, so a bad pin or a dropped
-      # input relay fails here. bats-test still installs BATS inline on this
-      # branch; the delegation to setup-bats follows once the action is on main.
+      # input relay fails here. bats-test delegates to it on this branch.
       - name: Setup BATS
         uses: ./setup-bats
 
@@ -302,6 +301,26 @@ jobs:
         with:
           test-directory: bats-tests/shell
           github-token: ${{ github.token }}
+
+      # Measures the same suites this step's neighbour runs, so a guard that
+      # misfires on this repo fails here rather than in a consumer's repository.
+      # The first run of a new kcov commit compiles it from source; later runs
+      # restore the build from cache.
+      - name: Measure shell coverage
+        uses: ./shell-coverage
+        with:
+          test-directory: bats-tests/shell
+
+      # Proves kcov honoured the exclusion markers rather than trusting its help
+      # text. The markers live here, in YAML, because this script is itself
+      # instrumented: a region-start literal inside a shell file would mark every
+      # line after it unreachable, erasing the guard from the report it checks.
+      - name: Verify kcov exclusion markers
+        shell: bash
+        env:
+          EXCLUDE_LINE: 'kcov-exclude-line'
+          EXCLUDE_REGION: 'kcov-exclude-start:kcov-exclude-end'
+        run: bash scripts/verify-kcov-exclusions.sh
 
   self-test-checks:
     name: Self-test typescript-ci-checks workflow
@@ -326,14 +345,29 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/shell-ci-checks.yml
     with:
-      # The bats-test job runs this repository's own suite, which shells out to
-      # uv, actionlint, and the markdownlint action's node_modules. A GitHub
-      # runner holds none of them, so the workflow's setup input provisions them
-      # from mise.toml before the suite runs.
+      # The bats-test and coverage jobs run this repository's own suite, which
+      # shells out to uv, actionlint, and the markdownlint action's node_modules.
+      # A GitHub runner holds none of them, so the workflow's setup input
+      # provisions them from mise.toml before the suite runs.
       setup: bash scripts/setup-ci-toolchain.sh
       # The dedicated BATS step above already posts the sticky test-results
       # comment; skip it here so the two runs do not fight over the same header.
-      publish-comment: 'false'
+      publish-comment: false
+      # Exercise the opt-in coverage job on push runs. The job turns on the input
+      # relay and the codecov upload path, so a defect shows before a consumer
+      # meets it. A pull request run skips the job instead, because the job calls
+      # couimet/github-actions/shell-coverage@main and rule CI002 forbids any
+      # other ref: the ref cannot resolve until the action reaches main, and the
+      # job would die in "Prepare all required actions" on every pull request.
+      # The first push after the merge validates the relay. See the shell-coverage
+      # section in README.md for the limits of the action.
+      run-coverage: ${{ github.event_name == 'push' }}
+      # Passed so that GitHub resolves both names against the workflow's declared
+      # inputs on every run: an undeclared input fails the caller before any job
+      # starts. That is the only live check of the relay. The values are the
+      # defaults, written out so the relay carries a visible operand.
+      coverage-exclude-region: 'kcov-exclude-start:kcov-exclude-end'
+      coverage-exclude-line: 'kcov-exclude-line'
 
   self-test-ci-checks:
     name: Self-test ci-checks workflow

@@ -31,7 +31,7 @@ runs:
       env:
         COMMAND: ${{ inputs.command }}
         POST_GENERATE: ${{ inputs.post-generate }}
-      run: bash "${{ github.action_path }}/check.sh"
+      run: bash "$GITHUB_ACTION_PATH/check.sh"
 
     - name: Post PR comment
       if: steps.check.outputs.comment-file != ''

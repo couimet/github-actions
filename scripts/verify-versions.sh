@@ -25,7 +25,7 @@ echo "Resolved pnpm version : ${PNPM_VERSION_OUTPUT} (expected ${expected_pnpm})
 echo "Cache hit              : ${CACHE_HIT:-}"
 
 case "$actual_node" in
-  "$expected_node"|"$expected_node".*) ;;
+  "$expected_node"|"$expected_node".*) ;; # kcov-exclude-line: an empty arm holds no command, so kcov never sees a hit
   *)
     echo "::error::Node version mismatch: expected ${expected_node}[.x.y], got ${actual_node}"
     exit 1
