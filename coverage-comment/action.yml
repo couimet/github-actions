@@ -39,7 +39,7 @@ runs:
 
     - name: Post coverage comment
       if: steps.discover.outputs.multiple_files != ''
-      uses: MishaKav/jest-coverage-comment@642ef024cc554a34b7082cea12c7bf63575ae151
+      uses: MishaKav/jest-coverage-comment@7032bf8e71aa2b267b6b143be3c4480b625c2b12
       with:
         github-token: ${{ inputs.github-token }}
         title: ${{ inputs.title }}
